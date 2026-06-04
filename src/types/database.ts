@@ -1,3 +1,9 @@
+export const COFFEE_SIZES_GRAMS = [150, 250, 500] as const;
+export type CoffeeSizeGrams = (typeof COFFEE_SIZES_GRAMS)[number];
+
+export const MIN_COFFEE_IMAGES = 3;
+export const MAX_COFFEE_IMAGES = 6;
+
 export type Json =
   | string
   | number
@@ -12,19 +18,56 @@ export type CoffeeRow = {
   slug: string;
   codename: string | null;
   tasting_notes: string;
-  description: string;
-  price_250g: number;
-  price_1000g: number | null;
-  image_url: string | null;
-  sold_out: boolean;
+  short_description: string;
+  long_description: string;
+  extended_content_url: string;
+  origin: string;
+  varietal: string;
+  beneficio: string;
+  altitude: string;
   is_active: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
 };
 
-export type CoffeeInsert = Omit<
-  CoffeeRow,
+export type CoffeeImageRow = {
+  id: string;
+  coffee_id: string;
+  url: string;
+  sort_order: number;
+  is_primary: boolean;
+  created_at: string;
+};
+
+export type CoffeeVariantRow = {
+  id: string;
+  coffee_id: string;
+  size_grams: CoffeeSizeGrams;
+  price: number;
+  is_available: boolean;
+};
+
+export type CoffeeInsert = Omit<CoffeeRow, "id" | "created_at" | "updated_at"> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type CoffeeUpdate = Partial<CoffeeInsert>;
+
+export type EducationNoteRow = {
+  id: string;
+  title: string;
+  content: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type EducationNoteInsert = Omit<
+  EducationNoteRow,
   "id" | "created_at" | "updated_at"
 > & {
   id?: string;
@@ -32,7 +75,15 @@ export type CoffeeInsert = Omit<
   updated_at?: string;
 };
 
-export type CoffeeUpdate = Partial<CoffeeInsert>;
+export type EducationNoteUpdate = Partial<EducationNoteInsert>;
+
+export type EducationNoteImageRow = {
+  id: string;
+  education_note_id: string;
+  url: string;
+  sort_order: number;
+  created_at: string;
+};
 
 export type Database = {
   public: {
@@ -41,6 +92,36 @@ export type Database = {
         Row: CoffeeRow;
         Insert: CoffeeInsert;
         Update: CoffeeUpdate;
+        Relationships: [];
+      };
+      coffee_images: {
+        Row: CoffeeImageRow;
+        Insert: Omit<CoffeeImageRow, "id" | "created_at"> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<CoffeeImageRow>;
+        Relationships: [];
+      };
+      coffee_variants: {
+        Row: CoffeeVariantRow;
+        Insert: Omit<CoffeeVariantRow, "id"> & { id?: string };
+        Update: Partial<CoffeeVariantRow>;
+        Relationships: [];
+      };
+      education_notes: {
+        Row: EducationNoteRow;
+        Insert: EducationNoteInsert;
+        Update: EducationNoteUpdate;
+        Relationships: [];
+      };
+      education_note_images: {
+        Row: EducationNoteImageRow;
+        Insert: Omit<EducationNoteImageRow, "id" | "created_at"> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<EducationNoteImageRow>;
         Relationships: [];
       };
     };

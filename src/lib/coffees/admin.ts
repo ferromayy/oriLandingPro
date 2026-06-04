@@ -1,75 +1,133 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { COFFEE_RELATIONS_SELECT } from "@/lib/coffees/select";
 import type { CoffeeFormData } from "@/lib/coffees/types";
+import type { Coffee } from "@/lib/coffees/types";
 import type { CoffeeInsert, CoffeeUpdate } from "@/types/database";
 
-function toInsertPayload(data: CoffeeFormData): CoffeeInsert {
+function toCoffeePayload(data: CoffeeFormData): CoffeeInsert {
   return {
     name: data.name.trim(),
     slug: data.slug.trim(),
     codename: data.codename.trim() || null,
     tasting_notes: data.tasting_notes.trim(),
-    description: data.description.trim(),
-    price_250g: data.price_250g,
-    price_1000g: data.price_1000g,
-    image_url: data.image_url.trim() || null,
-    sold_out: data.sold_out,
+    short_description: data.short_description.trim(),
+    long_description: data.long_description.trim(),
+    extended_content_url: (data.extended_content_url ?? "").trim(),
+    origin: data.origin.trim(),
+    varietal: data.varietal.trim(),
+    beneficio: data.beneficio.trim(),
+    altitude: data.altitude.trim(),
     is_active: data.is_active,
     sort_order: data.sort_order,
   };
 }
 
-export async function getAllCoffeesAdmin() {
+async function syncImages(
+  supabase: ReturnType<typeof createAdminClient>,
+  coffeeId: string,
+  images: CoffeeFormData["images"],
+) {
+  await supabase.from("coffee_images").delete().eq("coffee_id", coffeeId);
+
+  if (images.length === 0) return;
+
+  const { error } = await supabase.from("coffee_images").insert(
+    images.map((img, index) => ({
+      coffee_id: coffeeId,
+      url: img.url.trim(),
+      sort_order: img.sort_order ?? index,
+      is_primary: img.is_primary,
+    })),
+  );
+
+  if (error) throw new Error(error.message);
+}
+
+async function syncVariants(
+  supabase: ReturnType<typeof createAdminClient>,
+  coffeeId: string,
+  variants: CoffeeFormData["variants"],
+) {
+  await supabase.from("coffee_variants").delete().eq("coffee_id", coffeeId);
+
+  const { error } = await supabase.from("coffee_variants").insert(
+    variants.map((variant) => ({
+      coffee_id: coffeeId,
+      size_grams: variant.size_grams,
+      price: variant.price,
+      is_available: variant.is_available,
+    })),
+  );
+
+  if (error) throw new Error(error.message);
+}
+
+function normalizeCoffee(raw: Coffee): Coffee {
+  return {
+    ...raw,
+    coffee_images: raw.coffee_images ?? [],
+    coffee_variants: raw.coffee_variants ?? [],
+  };
+}
+
+export async function getAllCoffeesAdmin(): Promise<Coffee[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("coffees")
-    .select("*")
+    .select(COFFEE_RELATIONS_SELECT)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []).map((row) => normalizeCoffee(row as Coffee));
 }
 
-export async function getCoffeeByIdAdmin(id: string) {
+export async function getCoffeeByIdAdmin(id: string): Promise<Coffee | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("coffees")
-    .select("*")
+    .select(COFFEE_RELATIONS_SELECT)
     .eq("id", id)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data;
+  return data ? normalizeCoffee(data as Coffee) : null;
 }
 
 export async function createCoffeeAdmin(data: CoffeeFormData) {
   const supabase = createAdminClient();
   const { data: created, error } = await supabase
     .from("coffees")
-    .insert(toInsertPayload(data))
+    .insert(toCoffeePayload(data))
     .select()
     .single();
 
   if (error) throw new Error(error.message);
-  return created;
+
+  await syncImages(supabase, created.id, data.images);
+  await syncVariants(supabase, created.id, data.variants);
+
+  const full = await getCoffeeByIdAdmin(created.id);
+  if (!full) throw new Error("No se pudo cargar el café creado");
+  return full;
 }
 
 export async function updateCoffeeAdmin(id: string, data: CoffeeFormData) {
   const supabase = createAdminClient();
   const payload: CoffeeUpdate = {
-    ...toInsertPayload(data),
+    ...toCoffeePayload(data),
     updated_at: new Date().toISOString(),
   };
 
-  const { data: updated, error } = await supabase
-    .from("coffees")
-    .update(payload)
-    .eq("id", id)
-    .select()
-    .single();
-
+  const { error } = await supabase.from("coffees").update(payload).eq("id", id);
   if (error) throw new Error(error.message);
-  return updated;
+
+  await syncImages(supabase, id, data.images);
+  await syncVariants(supabase, id, data.variants);
+
+  const full = await getCoffeeByIdAdmin(id);
+  if (!full) throw new Error("No se pudo cargar el café actualizado");
+  return full;
 }
 
 export async function deleteCoffeeAdmin(id: string) {

@@ -2,6 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { getAllCoffeesAdmin } from "@/lib/coffees/admin";
 import { formatArsPrice } from "@/lib/coffees/types";
+import {
+  getDisplayPrice,
+  getPrimaryImage,
+  isCoffeeSoldOut,
+} from "@/lib/coffees/helpers";
 import { DeleteCoffeeButton } from "@/components/admin/delete-coffee-button";
 
 export default async function AdminCoffeesPage() {
@@ -20,7 +25,7 @@ export default async function AdminCoffeesPage() {
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Cafés</h1>
           <p className="mt-1 text-sm text-zinc-600">
-            Editá nombre, precio, notas, imagen y disponibilidad.
+            Galería de 3–6 fotos y precios por 150g, 250g y 500g.
           </p>
         </div>
         <Link
@@ -42,69 +47,82 @@ export default async function AdminCoffeesPage() {
           <thead className="border-b border-zinc-200 bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
             <tr>
               <th className="px-4 py-3">Producto</th>
-              <th className="px-4 py-3">Precio</th>
+              <th className="px-4 py-3">Fotos</th>
+              <th className="px-4 py-3">Desde</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {coffees.map((coffee) => (
-              <tr key={coffee.id} className="border-b border-zinc-100 last:border-0">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-12 w-12 overflow-hidden rounded bg-zinc-100">
-                      {coffee.image_url && (
-                        <Image
-                          src={coffee.image_url}
-                          alt={coffee.name}
-                          fill
-                          className="object-cover"
-                        />
+            {coffees.map((coffee) => {
+              const imageUrl = getPrimaryImage(coffee);
+              const price = getDisplayPrice(coffee);
+              const soldOut = isCoffeeSoldOut(coffee);
+
+              return (
+                <tr key={coffee.id} className="border-b border-zinc-100 last:border-0">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-12 w-12 overflow-hidden rounded bg-zinc-100">
+                        {imageUrl && (
+                          <Image
+                            src={imageUrl}
+                            alt={coffee.name}
+                            fill
+                            className="object-cover"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-zinc-900">{coffee.name}</p>
+                        <p className="text-xs text-zinc-500">/{coffee.slug}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {coffee.coffee_images.length} foto
+                    {coffee.coffee_images.length === 1 ? "" : "s"}
+                  </td>
+                  <td className="px-4 py-3">
+                    {price !== null ? formatArsPrice(price) : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {soldOut && (
+                        <span className="rounded bg-black px-2 py-0.5 text-[10px] uppercase text-white">
+                          Sold out
+                        </span>
+                      )}
+                      {!coffee.is_active && (
+                        <span className="rounded bg-zinc-200 px-2 py-0.5 text-[10px] uppercase text-zinc-700">
+                          Oculto
+                        </span>
+                      )}
+                      {!soldOut && coffee.is_active && (
+                        <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] uppercase text-emerald-800">
+                          Activo
+                        </span>
                       )}
                     </div>
-                    <div>
-                      <p className="font-medium text-zinc-900">{coffee.name}</p>
-                      <p className="text-xs text-zinc-500">/{coffee.slug}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end gap-2">
+                      <Link
+                        href={`/admin/coffees/${coffee.id}/edit`}
+                        className="rounded border border-zinc-300 px-3 py-1 text-xs hover:bg-zinc-50"
+                      >
+                        Editar
+                      </Link>
+                      <DeleteCoffeeButton coffeeId={coffee.id} coffeeName={coffee.name} />
                     </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3">{formatArsPrice(coffee.price_250g)}</td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1">
-                    {coffee.sold_out && (
-                      <span className="rounded bg-black px-2 py-0.5 text-[10px] uppercase text-white">
-                        Sold out
-                      </span>
-                    )}
-                    {!coffee.is_active && (
-                      <span className="rounded bg-zinc-200 px-2 py-0.5 text-[10px] uppercase text-zinc-700">
-                        Oculto
-                      </span>
-                    )}
-                    {!coffee.sold_out && coffee.is_active && (
-                      <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] uppercase text-emerald-800">
-                        Activo
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-end gap-2">
-                    <Link
-                      href={`/admin/coffees/${coffee.id}/edit`}
-                      className="rounded border border-zinc-300 px-3 py-1 text-xs hover:bg-zinc-50"
-                    >
-                      Editar
-                    </Link>
-                    <DeleteCoffeeButton coffeeId={coffee.id} coffeeName={coffee.name} />
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              );
+            })}
             {coffees.length === 0 && !error && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-zinc-500">
-                  No hay cafés. Creá el primero o ejecutá la migración SQL.
+                <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
+                  No hay cafés. Creá el primero o ejecutá las migraciones SQL.
                 </td>
               </tr>
             )}

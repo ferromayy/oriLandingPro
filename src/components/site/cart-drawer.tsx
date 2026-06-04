@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCart } from "@/components/site/cart-context";
-import { formatArsPrice } from "@/lib/coffees/types";
+import { formatArsPrice, formatSizeLabel } from "@/lib/coffees/types";
 
 export function CartDrawer() {
   const {
@@ -38,7 +38,10 @@ export function CartDrawer() {
           ) : (
             <ul className="space-y-4">
               {items.map((item) => (
-                <li key={item.coffeeId} className="flex gap-3">
+                <li
+                  key={`${item.coffeeId}-${item.sizeGrams}-${item.grind}`}
+                  className="flex gap-3"
+                >
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden bg-gray-100">
                     {item.imageUrl && (
                       <Image
@@ -51,12 +54,17 @@ export function CartDrawer() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{item.name}</p>
-                    <p className="text-xs text-gray-500">x{item.quantity}</p>
-                    <p className="text-sm">{formatArsPrice(item.price * item.quantity)}</p>
+                    <p className="text-xs text-gray-500">
+                      {formatSizeLabel(item.sizeGrams)} · {item.grind} · x
+                      {item.quantity}
+                    </p>
+                    <p className="text-sm">
+                      {formatArsPrice(item.price * item.quantity)}
+                    </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeItem(item.coffeeId)}
+                    onClick={() => removeItem(item.coffeeId, item.sizeGrams, item.grind)}
                     className="text-gray-400 hover:text-gray-700"
                   >
                     <span className="material-icons-outlined text-lg">delete</span>

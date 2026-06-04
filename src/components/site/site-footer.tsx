@@ -1,6 +1,6 @@
 export function SiteFooter() {
   return (
-    <footer className="mt-16 bg-gray-50 py-12" id="nosotros">
+    <footer className="mt-16 bg-gray-50 py-12">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-10 md:grid-cols-3">
         <div>
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-900">
@@ -8,19 +8,19 @@ export function SiteFooter() {
           </h3>
           <ul className="space-y-2 text-sm text-gray-600">
             <li>
-              <a href="#mayoristas" className="hover:text-gray-900">
+              <a href="/mayoristas" className="hover:text-gray-900">
                 Mayoristas y asesoramiento
               </a>
             </li>
             <li>
-              <a href="#nosotros" className="hover:text-gray-900">
+              <a href="/nosotros" className="hover:text-gray-900">
                 Nosotros
               </a>
             </li>
           </ul>
         </div>
 
-        <div id="mayoristas">
+        <div>
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-900">
             Contacto
           </h3>

@@ -1,22 +1,52 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import type { CoffeeFormData } from "@/lib/coffees/types";
-import { slugify } from "@/lib/coffees/types";
+import { useCallback, useState } from "react";
+import {
+  type CoffeeFormData,
+  type CoffeeImageForm,
+  defaultVariants,
+  slugify,
+  COFFEE_SIZES_GRAMS,
+  formatSizeLabel,
+  MAX_COFFEE_IMAGES,
+  MIN_COFFEE_IMAGES,
+} from "@/lib/coffees/types";
+import {
+  validateCoffeeForm,
+  type FormValidationIssue,
+  type FormSection,
+} from "@/lib/coffees/schema";
+import {
+  fieldHasError,
+  FormErrorBanner,
+  FormToast,
+  inputErrorClass,
+  sectionErrorClass,
+} from "@/components/admin/form-notifications";
 
 const emptyForm: CoffeeFormData = {
   name: "",
   slug: "",
   codename: "",
   tasting_notes: "",
-  description: "",
-  price_250g: 0,
-  price_1000g: null,
-  image_url: "",
-  sold_out: false,
+  short_description: "",
+  long_description: "",
+  extended_content_url: "",
+  origin: "",
+  varietal: "",
+  beneficio: "",
+  altitude: "",
+  images: [],
+  variants: defaultVariants(),
   is_active: true,
   sort_order: 0,
+};
+
+const SECTION_IDS: Record<FormSection, string> = {
+  general: "coffee-section-general",
+  images: "coffee-section-images",
+  variants: "coffee-section-variants",
 };
 
 type Props = {
@@ -27,16 +57,37 @@ type Props = {
 
 export function CoffeeForm({ mode, coffeeId, initialData }: Props) {
   const router = useRouter();
-  const [form, setForm] = useState<CoffeeFormData>(initialData ?? emptyForm);
+  const [form, setForm] = useState<CoffeeFormData>(() =>
+    initialData ? { ...emptyForm, ...initialData, extended_content_url: initialData.extended_content_url ?? "" } : emptyForm,
+  );
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [issues, setIssues] = useState<FormValidationIssue[]>([]);
+  const [showToast, setShowToast] = useState(false);
+
+  const dismissToast = useCallback(() => setShowToast(false), []);
+
+  function clearIssues() {
+    setIssues([]);
+    setShowToast(false);
+  }
+
+  function showValidationErrors(nextIssues: FormValidationIssue[]) {
+    setIssues(nextIssues);
+    setShowToast(true);
+    const firstSection = nextIssues[0]?.section ?? "general";
+    document.getElementById(SECTION_IDS[firstSection])?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
 
   function updateField<K extends keyof CoffeeFormData>(
     key: K,
     value: CoffeeFormData[K],
   ) {
+    clearIssues();
     setForm((prev) => {
       const next = { ...prev, [key]: value };
       if (key === "name" && !slugTouched) {
@@ -46,31 +97,126 @@ export function CoffeeForm({ mode, coffeeId, initialData }: Props) {
     });
   }
 
+  function setPrimaryImage(index: number) {
+    clearIssues();
+    setForm((prev) => ({
+      ...prev,
+      images: prev.images.map((img, i) => ({
+        ...img,
+        is_primary: i === index,
+      })),
+    }));
+  }
+
+  function removeImage(index: number) {
+    clearIssues();
+    setForm((prev) => {
+      const next = prev.images.filter((_, i) => i !== index);
+      if (next.length > 0 && !next.some((img) => img.is_primary)) {
+        next[0] = { ...next[0], is_primary: true };
+      }
+      return {
+        ...prev,
+        images: next.map((img, i) => ({ ...img, sort_order: i })),
+      };
+    });
+  }
+
+  function moveImage(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= form.images.length) return;
+    setForm((prev) => {
+      const next = [...prev.images];
+      [next[index], next[target]] = [next[target], next[index]];
+      return {
+        ...prev,
+        images: next.map((img, i) => ({ ...img, sort_order: i })),
+      };
+    });
+  }
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files?.length) return;
+
+    if (form.images.length + files.length > MAX_COFFEE_IMAGES) {
+      showValidationErrors([
+        {
+          field: "images",
+          message: `Máximo ${MAX_COFFEE_IMAGES} fotos por café`,
+          section: "images",
+        },
+      ]);
+      return;
+    }
 
     setUploading(true);
-    setError(null);
+    clearIssues();
 
     try {
-      const body = new FormData();
-      body.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? "Error al subir imagen");
-      updateField("image_url", data.url);
+      const uploaded: CoffeeImageForm[] = [];
+
+      for (const file of Array.from(files)) {
+        const body = new FormData();
+        body.append("file", file);
+        const res = await fetch("/api/admin/upload", { method: "POST", body });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message ?? "Error al subir imagen");
+        uploaded.push({
+          url: data.url,
+          sort_order: form.images.length + uploaded.length,
+          is_primary: form.images.length === 0 && uploaded.length === 0,
+        });
+      }
+
+      setForm((prev) => {
+        const merged = [...prev.images, ...uploaded].map((img, i) => ({
+          ...img,
+          sort_order: i,
+        }));
+        if (!merged.some((img) => img.is_primary) && merged.length > 0) {
+          merged[0] = { ...merged[0], is_primary: true };
+        }
+        return { ...prev, images: merged };
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al subir imagen");
+      showValidationErrors([
+        {
+          field: "images",
+          message: err instanceof Error ? err.message : "Error al subir imagen",
+          section: "images",
+        },
+      ]);
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
+  }
+
+  function updateVariant(
+    sizeGrams: (typeof COFFEE_SIZES_GRAMS)[number],
+    patch: Partial<CoffeeFormData["variants"][number]>,
+  ) {
+    clearIssues();
+    setForm((prev) => ({
+      ...prev,
+      variants: prev.variants.map((v) =>
+        v.size_grams === sizeGrams ? { ...v, ...patch } : v,
+      ),
+    }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    clearIssues();
+
+    const validationIssues = validateCoffeeForm(form);
+    if (validationIssues.length > 0) {
+      showValidationErrors(validationIssues);
+      return;
+    }
+
     setLoading(true);
-    setError(null);
 
     const url =
       mode === "create" ? "/api/admin/coffees" : `/api/admin/coffees/${coffeeId}`;
@@ -83,138 +229,357 @@ export function CoffeeForm({ mode, coffeeId, initialData }: Props) {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? "Error al guardar");
+
+      if (!res.ok) {
+        const serverIssues: FormValidationIssue[] = data.errors?.length
+          ? data.errors.map((message: string) => ({
+              field: "form",
+              message,
+              section: "general" as FormSection,
+            }))
+          : [
+              {
+                field: "form",
+                message: data.message ?? "Error al guardar",
+                section: "general",
+              },
+            ];
+        showValidationErrors(serverIssues);
+        return;
+      }
+
       router.push("/admin/coffees");
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar");
+    } catch {
+      showValidationErrors([
+        {
+          field: "form",
+          message: "Error de red. Verificá tu conexión e intentá de nuevo.",
+          section: "general",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
   }
 
+  const imagesMissing = form.images.length < MIN_COFFEE_IMAGES;
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-5 rounded-xl border border-zinc-200 bg-white p-6"
-    >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Nombre *">
-          <input
-            required
-            value={form.name}
-            onChange={(e) => updateField("name", e.target.value)}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Slug (URL) *">
-          <input
-            required
-            value={form.slug}
-            onChange={(e) => {
-              setSlugTouched(true);
-              updateField("slug", slugify(e.target.value));
-            }}
-            className={inputClass}
-          />
-        </Field>
-      </div>
+    <>
+      {showToast && issues.length > 0 && (
+        <FormToast issues={issues} onDismiss={dismissToast} />
+      )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Codename (ej. FRUTO)">
-          <input
-            value={form.codename}
-            onChange={(e) => updateField("codename", e.target.value)}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Orden en grilla">
-          <input
-            type="number"
-            value={form.sort_order}
-            onChange={(e) => updateField("sort_order", Number(e.target.value))}
-            className={inputClass}
-          />
-        </Field>
-      </div>
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-8 rounded-xl border border-zinc-200 bg-white p-6"
+        noValidate
+      >
+        <FormErrorBanner issues={issues} />
 
-      <Field label="Notas de cata *">
-        <textarea
-          required
-          rows={2}
-          value={form.tasting_notes}
-          onChange={(e) => updateField("tasting_notes", e.target.value)}
-          className={inputClass}
-          placeholder="Chocolate amargo, cáscara de naranja y frutado"
-        />
-      </Field>
+        <section
+          id={SECTION_IDS.general}
+          className={`space-y-4 ${fieldHasError(issues, "name") || fieldHasError(issues, "slug") || fieldHasError(issues, "tasting_notes") ? sectionErrorClass : ""}`}
+        >
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+            Datos generales
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nombre *" error={fieldHasError(issues, "name")}>
+              <input
+                value={form.name}
+                onChange={(e) => updateField("name", e.target.value)}
+                className={inputClass(fieldHasError(issues, "name"))}
+                placeholder="Brasil - Natural"
+              />
+            </Field>
+            <Field label="Slug (URL) *" error={fieldHasError(issues, "slug")}>
+              <input
+                value={form.slug}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  updateField("slug", slugify(e.target.value));
+                }}
+                className={inputClass(fieldHasError(issues, "slug"))}
+                placeholder="brasil-natural"
+              />
+            </Field>
+          </div>
 
-      <Field label="Descripción extendida (página de producto)">
-        <textarea
-          rows={4}
-          value={form.description}
-          onChange={(e) => updateField("description", e.target.value)}
-          className={inputClass}
-        />
-      </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Codename (ej. FRUTO)">
+              <input
+                value={form.codename}
+                onChange={(e) => updateField("codename", e.target.value)}
+                className={inputClass(false)}
+              />
+            </Field>
+            <Field label="Orden en grilla">
+              <input
+                type="number"
+                value={form.sort_order}
+                onChange={(e) => updateField("sort_order", Number(e.target.value))}
+                className={inputClass(false)}
+              />
+            </Field>
+          </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Precio 250g (ARS) *">
-          <input
-            required
-            type="number"
-            min={0}
-            value={form.price_250g || ""}
-            onChange={(e) => updateField("price_250g", Number(e.target.value))}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Precio 1kg (ARS, opcional)">
-          <input
-            type="number"
-            min={0}
-            value={form.price_1000g ?? ""}
-            onChange={(e) =>
-              updateField(
-                "price_1000g",
-                e.target.value === "" ? null : Number(e.target.value),
-              )
-            }
-            className={inputClass}
-          />
-        </Field>
-      </div>
-
-      <Field label="Imagen">
-        <div className="space-y-3">
-          <input type="file" accept="image/*" onChange={handleImageUpload} />
-          {uploading && <p className="text-xs text-zinc-500">Subiendo imagen…</p>}
-          <input
-            value={form.image_url}
-            onChange={(e) => updateField("image_url", e.target.value)}
-            className={inputClass}
-            placeholder="/images/products/fruto.png o URL de Supabase Storage"
-          />
-          {form.image_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={form.image_url}
-              alt="Vista previa"
-              className="h-32 w-32 rounded border object-cover"
+          <Field label="Notas de cata *" error={fieldHasError(issues, "tasting_notes")}>
+            <textarea
+              rows={2}
+              value={form.tasting_notes}
+              onChange={(e) => updateField("tasting_notes", e.target.value)}
+              className={inputClass(fieldHasError(issues, "tasting_notes"))}
+              placeholder="Chocolate amargo, cáscara de naranja y frutado"
             />
-          )}
-        </div>
-      </Field>
+          </Field>
 
-      <div className="flex flex-wrap gap-6">
-        <label className="flex items-center gap-2 text-sm">
+          <Field
+            label="Descripción corta *"
+            error={fieldHasError(issues, "short_description")}
+          >
+            <textarea
+              rows={6}
+              value={form.short_description}
+              onChange={(e) => updateField("short_description", e.target.value)}
+              className={inputClass(fieldHasError(issues, "short_description"))}
+              placeholder={"Párrafo introductorio (como en oricafe.com.ar).\n\nSepará bloques con una línea en blanco para saltos visuales."}
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              Primer bloque de texto bajo el producto. Cada línea en blanco = salto
+              de párrafo visual.
+            </p>
+          </Field>
+
+          <Field label="Descripción larga">
+            <textarea
+              rows={10}
+              value={form.long_description}
+              onChange={(e) => updateField("long_description", e.target.value)}
+              className={inputClass(false)}
+              placeholder={"**Hablemos un poco más del varietal.**\n\nReconocido por su exclusividad...\n\n**Hablemos un poco más del beneficio.**\n\nLos cafés Honey se destacan..."}
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              Secciones con título en negrita. Usá{" "}
+              <code className="rounded bg-zinc-100 px-1">**Título.**</code> o el
+              texto &quot;Hablemos un poco más del…&quot; al inicio de un bloque.
+            </p>
+          </Field>
+
+          <Field
+            label="URL contenido extendido"
+            error={fieldHasError(issues, "extended_content_url")}
+          >
+            <input
+              type="url"
+              value={form.extended_content_url ?? ""}
+              onChange={(e) => updateField("extended_content_url", e.target.value)}
+              className={inputClass(fieldHasError(issues, "extended_content_url"))}
+              placeholder="https://..."
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              Opcional. En el detalle del producto se muestra la descripción
+              corta como adelanto y un botón &quot;Seguir leyendo&quot; que lleva
+              a esta URL con el contenido extendido.
+            </p>
+          </Field>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+            Ficha técnica
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Origen">
+              <input
+                value={form.origin}
+                onChange={(e) => updateField("origin", e.target.value)}
+                className={inputClass(false)}
+                placeholder="Colombia, Rio blanco - Tolima"
+              />
+            </Field>
+            <Field label="Varietal">
+              <input
+                value={form.varietal}
+                onChange={(e) => updateField("varietal", e.target.value)}
+                className={inputClass(false)}
+                placeholder="Gesha"
+              />
+            </Field>
+            <Field label="Beneficio">
+              <input
+                value={form.beneficio}
+                onChange={(e) => updateField("beneficio", e.target.value)}
+                className={inputClass(false)}
+                placeholder="Honey"
+              />
+            </Field>
+            <Field label="Altitud">
+              <input
+                value={form.altitude}
+                onChange={(e) => updateField("altitude", e.target.value)}
+                className={inputClass(false)}
+                placeholder="2000 - 2100 msnm"
+              />
+            </Field>
+          </div>
+        </section>
+
+        <section
+          id={SECTION_IDS.images}
+          className={`space-y-4 ${fieldHasError(issues, "images") || imagesMissing ? sectionErrorClass : ""}`}
+        >
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+              Fotos ({MIN_COFFEE_IMAGES}–{MAX_COFFEE_IMAGES}) *
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              Marcá una como <strong>principal</strong> — es la que se ve en la home.
+            </p>
+            {imagesMissing && (
+              <p className="mt-2 text-xs font-medium text-amber-700">
+                Faltan {MIN_COFFEE_IMAGES - form.images.length} foto
+                {MIN_COFFEE_IMAGES - form.images.length === 1 ? "" : "s"} (mínimo{" "}
+                {MIN_COFFEE_IMAGES})
+              </p>
+            )}
+          </div>
+
           <input
-            type="checkbox"
-            checked={form.sold_out}
-            onChange={(e) => updateField("sold_out", e.target.checked)}
+            type="file"
+            accept="image/*"
+            multiple
+            disabled={uploading || form.images.length >= MAX_COFFEE_IMAGES}
+            onChange={handleImageUpload}
           />
-          Sold out
-        </label>
+          {uploading && <p className="text-xs text-zinc-500">Subiendo…</p>}
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {form.images.map((img, index) => (
+              <div
+                key={`${img.url}-${index}`}
+                className={`rounded-lg border p-3 ${
+                  img.is_primary ? "border-zinc-900 ring-1 ring-zinc-900" : "border-zinc-200"
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img.url}
+                  alt={`Foto ${index + 1}`}
+                  className="mb-3 aspect-square w-full rounded object-cover"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPrimaryImage(index)}
+                    className={`rounded px-2 py-1 text-xs ${
+                      img.is_primary
+                        ? "bg-zinc-900 text-white"
+                        : "border border-zinc-300 hover:bg-zinc-50"
+                    }`}
+                  >
+                    {img.is_primary ? "★ Principal" : "Hacer principal"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveImage(index, -1)}
+                    className="rounded border border-zinc-300 px-2 py-1 text-xs"
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveImage(index, 1)}
+                    className="rounded border border-zinc-300 px-2 py-1 text-xs"
+                  >
+                    →
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="rounded border border-red-200 px-2 py-1 text-xs text-red-700"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section
+          id={SECTION_IDS.variants}
+          className={`space-y-4 ${fieldHasError(issues, "variants") ? sectionErrorClass : ""}`}
+        >
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+              Tamaños y precios *
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              150g, 250g y 500g — precio en ARS y disponibilidad por tamaño.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-lg border border-zinc-200">
+            <table className="min-w-full text-sm">
+              <thead className="bg-zinc-50 text-left text-xs uppercase text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3">Tamaño</th>
+                  <th className="px-4 py-3">Precio (ARS)</th>
+                  <th className="px-4 py-3">Disponible</th>
+                </tr>
+              </thead>
+              <tbody>
+                {form.variants.map((variant) => {
+                  const variantError = fieldHasError(
+                    issues,
+                    `variants.${variant.size_grams}`,
+                  );
+                  return (
+                    <tr
+                      key={variant.size_grams}
+                      className={`border-t border-zinc-100 ${variantError ? "bg-red-50/40" : ""}`}
+                    >
+                      <td className="px-4 py-3 font-medium">
+                        {formatSizeLabel(variant.size_grams)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          min={0}
+                          value={variant.price || ""}
+                          onChange={(e) =>
+                            updateVariant(variant.size_grams, {
+                              price: Number(e.target.value),
+                            })
+                          }
+                          className={inputClass(variantError)}
+                          placeholder="23000"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={variant.is_available}
+                            onChange={(e) =>
+                              updateVariant(variant.size_grams, {
+                                is_available: e.target.checked,
+                              })
+                            }
+                          />
+                          En stock
+                        </label>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -223,40 +588,51 @@ export function CoffeeForm({ mode, coffeeId, initialData }: Props) {
           />
           Visible en la landing
         </label>
-      </div>
 
-      {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-      )}
-
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-60"
-        >
-          {loading ? "Guardando…" : mode === "create" ? "Crear café" : "Guardar cambios"}
-        </button>
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
-        >
-          Cancelar
-        </button>
-      </div>
-    </form>
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-60"
+          >
+            {loading ? "Guardando…" : mode === "create" ? "Crear café" : "Guardar cambios"}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  error,
+}: {
+  label: string;
+  children: React.ReactNode;
+  error?: boolean;
+}) {
   return (
     <label className="block space-y-1">
-      <span className="text-sm font-medium text-zinc-700">{label}</span>
+      <span className={`text-sm font-medium ${error ? "text-red-700" : "text-zinc-700"}`}>
+        {label}
+      </span>
       {children}
     </label>
   );
 }
 
-const inputClass =
-  "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200";
+function inputClass(hasError: boolean) {
+  return `w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 ${
+    hasError
+      ? inputErrorClass
+      : "border-zinc-300 focus:border-zinc-500 focus:ring-zinc-200"
+  }`;
+}

@@ -1,32 +1,88 @@
-import type { CoffeeRow } from "@/types/database";
+import type {
+  CoffeeImageRow,
+  CoffeeRow,
+  CoffeeSizeGrams,
+  CoffeeVariantRow,
+} from "@/types/database";
+import { COFFEE_SIZES_GRAMS } from "@/types/database";
 
-export type Coffee = CoffeeRow;
+export type CoffeeImage = CoffeeImageRow;
+export type CoffeeVariant = CoffeeVariantRow;
+
+export type Coffee = CoffeeRow & {
+  coffee_images: CoffeeImage[];
+  coffee_variants: CoffeeVariant[];
+};
+
+export type CoffeeImageForm = {
+  url: string;
+  sort_order: number;
+  is_primary: boolean;
+};
+
+export type CoffeeVariantForm = {
+  size_grams: CoffeeSizeGrams;
+  price: number;
+  is_available: boolean;
+};
 
 export type CoffeeFormData = {
   name: string;
   slug: string;
   codename: string;
   tasting_notes: string;
-  description: string;
-  price_250g: number;
-  price_1000g: number | null;
-  image_url: string;
-  sold_out: boolean;
+  short_description: string;
+  long_description: string;
+  extended_content_url: string;
+  origin: string;
+  varietal: string;
+  beneficio: string;
+  altitude: string;
+  images: CoffeeImageForm[];
+  variants: CoffeeVariantForm[];
   is_active: boolean;
   sort_order: number;
 };
 
+export function defaultVariants(): CoffeeVariantForm[] {
+  return COFFEE_SIZES_GRAMS.map((size_grams) => ({
+    size_grams,
+    price: 0,
+    is_available: false,
+  }));
+}
+
 export function coffeeToFormData(coffee: Coffee): CoffeeFormData {
+  const images = [...coffee.coffee_images].sort(
+    (a, b) => a.sort_order - b.sort_order,
+  );
+  const variants = COFFEE_SIZES_GRAMS.map((size) => {
+    const found = coffee.coffee_variants.find((v) => v.size_grams === size);
+    return {
+      size_grams: size,
+      price: found?.price ?? 0,
+      is_available: found?.is_available ?? false,
+    };
+  });
+
   return {
     name: coffee.name,
     slug: coffee.slug,
     codename: coffee.codename ?? "",
     tasting_notes: coffee.tasting_notes,
-    description: coffee.description,
-    price_250g: coffee.price_250g,
-    price_1000g: coffee.price_1000g,
-    image_url: coffee.image_url ?? "",
-    sold_out: coffee.sold_out,
+    short_description: coffee.short_description,
+    long_description: coffee.long_description,
+    extended_content_url: coffee.extended_content_url ?? "",
+    origin: coffee.origin,
+    varietal: coffee.varietal,
+    beneficio: coffee.beneficio,
+    altitude: coffee.altitude,
+    images: images.map((img) => ({
+      url: img.url,
+      sort_order: img.sort_order,
+      is_primary: img.is_primary,
+    })),
+    variants,
     is_active: coffee.is_active,
     sort_order: coffee.sort_order,
   };
@@ -42,6 +98,17 @@ export function slugify(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export function formatArsPrice(cents: number): string {
-  return `$${cents.toLocaleString("es-AR")}`;
+export function formatArsPrice(amount: number): string {
+  return `$${amount.toLocaleString("es-AR")}`;
 }
+
+export function formatSizeLabel(sizeGrams: CoffeeSizeGrams): string {
+  return `${sizeGrams}g`;
+}
+
+export {
+  COFFEE_SIZES_GRAMS,
+  MAX_COFFEE_IMAGES,
+  MIN_COFFEE_IMAGES,
+  type CoffeeSizeGrams,
+} from "@/types/database";

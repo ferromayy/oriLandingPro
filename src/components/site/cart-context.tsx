@@ -9,14 +9,27 @@ import {
   useState,
 } from "react";
 import type { Coffee } from "@/lib/coffees/types";
-import { formatArsPrice } from "@/lib/coffees/types";
+import { formatArsPrice, formatSizeLabel } from "@/lib/coffees/types";
+import type { CoffeeSizeGrams } from "@/types/database";
+import type { GrindOption } from "@/lib/coffees/product-content";
+import { getVariant } from "@/lib/coffees/helpers";
 
 export type CartItem = {
   coffeeId: string;
+  sizeGrams: CoffeeSizeGrams;
+  grind: GrindOption;
   name: string;
   price: number;
   quantity: number;
   imageUrl: string | null;
+};
+
+type AddItemParams = {
+  coffee: Coffee;
+  sizeGrams: CoffeeSizeGrams;
+  imageUrl: string | null;
+  quantity: number;
+  grind: GrindOption;
 };
 
 type CartContextValue = {
@@ -27,14 +40,18 @@ type CartContextValue = {
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
-  addItem: (coffee: Coffee) => void;
-  removeItem: (coffeeId: string) => void;
+  addItem: (params: AddItemParams) => void;
+  removeItem: (coffeeId: string, sizeGrams: CoffeeSizeGrams, grind: GrindOption) => void;
   clearCart: () => void;
   whatsappCheckoutUrl: string;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
-const STORAGE_KEY = "ori-cart";
+const STORAGE_KEY = "ori-cart-v3";
+
+function itemKey(coffeeId: string, sizeGrams: number, grind: string) {
+  return `${coffeeId}:${sizeGrams}:${grind}`;
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -45,8 +62,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        // Hidratación del carrito desde localStorage (solo cliente)
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional hydration
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration from localStorage
         setItems(JSON.parse(raw) as CartItem[]);
       }
     } catch {
@@ -60,32 +76,56 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hydrated]);
 
-  const addItem = useCallback((coffee: Coffee) => {
-    if (coffee.sold_out) return;
-    setItems((prev) => {
-      const existing = prev.find((i) => i.coffeeId === coffee.id);
-      if (existing) {
-        return prev.map((i) =>
-          i.coffeeId === coffee.id ? { ...i, quantity: i.quantity + 1 } : i,
-        );
-      }
-      return [
-        ...prev,
-        {
-          coffeeId: coffee.id,
-          name: coffee.name,
-          price: coffee.price_250g,
-          quantity: 1,
-          imageUrl: coffee.image_url,
-        },
-      ];
-    });
-    setIsOpen(true);
-  }, []);
+  const addItem = useCallback(
+    ({ coffee, sizeGrams, imageUrl, quantity, grind }: AddItemParams) => {
+      const variant = getVariant(coffee, sizeGrams);
+      if (!variant?.is_available || variant.price <= 0) return;
 
-  const removeItem = useCallback((coffeeId: string) => {
-    setItems((prev) => prev.filter((i) => i.coffeeId !== coffeeId));
-  }, []);
+      setItems((prev) => {
+        const key = itemKey(coffee.id, sizeGrams, grind);
+        const existing = prev.find(
+          (i) => itemKey(i.coffeeId, i.sizeGrams, i.grind) === key,
+        );
+        if (existing) {
+          return prev.map((i) =>
+            itemKey(i.coffeeId, i.sizeGrams, i.grind) === key
+              ? { ...i, quantity: i.quantity + quantity }
+              : i,
+          );
+        }
+        return [
+          ...prev,
+          {
+            coffeeId: coffee.id,
+            sizeGrams,
+            grind,
+            name: coffee.name,
+            price: variant.price,
+            quantity,
+            imageUrl,
+          },
+        ];
+      });
+      setIsOpen(true);
+    },
+    [],
+  );
+
+  const removeItem = useCallback(
+    (coffeeId: string, sizeGrams: CoffeeSizeGrams, grind: GrindOption) => {
+      setItems((prev) =>
+        prev.filter(
+          (i) =>
+            !(
+              i.coffeeId === coffeeId &&
+              i.sizeGrams === sizeGrams &&
+              i.grind === grind
+            ),
+        ),
+      );
+    },
+    [],
+  );
 
   const clearCart = useCallback(() => setItems([]), []);
 
@@ -101,7 +141,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const whatsappCheckoutUrl = useMemo(() => {
     const lines = items.map(
-      (i) => `• ${i.name} x${i.quantity} — ${formatArsPrice(i.price * i.quantity)}`,
+      (i) =>
+        `• ${i.name} (${formatSizeLabel(i.sizeGrams)}, ${i.grind}) x${i.quantity} — ${formatArsPrice(i.price * i.quantity)}`,
     );
     const text = encodeURIComponent(
       `Hola Orí! Quiero consultar por mi pedido:\n\n${lines.join("\n")}\n\nTotal: ${formatArsPrice(total)}`,

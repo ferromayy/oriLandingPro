@@ -7,9 +7,14 @@ import { useCart } from "@/components/site/cart-context";
 
 const navLinks = [
   { href: "/", label: "Inicio" },
-  { href: "#mayoristas", label: "Mayoristas y asesoramiento" },
-  { href: "#nosotros", label: "Nosotros" },
+  { href: "/cafe", label: "Café" },
+  { href: "/educacion", label: "Educación" },
+  { href: "/mayoristas", label: "Mayoristas y asesoramiento" },
+  { href: "/nosotros", label: "Nosotros" },
 ];
+
+const navLinkClass =
+  "text-xs font-medium uppercase tracking-widest text-gray-900 transition-colors hover:text-gray-600";
 
 export function SiteHeader() {
   const { count, toggleCart } = useCart();
@@ -32,11 +37,7 @@ export function SiteHeader() {
 
           <nav className="hidden items-center gap-8 lg:flex">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-xs font-medium uppercase tracking-widest text-gray-900 transition-colors hover:text-gray-600"
-              >
+              <Link key={link.href} href={link.href} className={navLinkClass}>
                 {link.label}
               </Link>
             ))}
@@ -49,7 +50,9 @@ export function SiteHeader() {
               className="relative flex items-center gap-1 px-2 py-1 text-gray-900"
               aria-label="Abrir carrito"
             >
-              <span className="material-icons-outlined text-[22px]">shopping_cart</span>
+              <span className="material-icons-outlined text-[22px]">
+                shopping_cart
+              </span>
               {count > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-[10px] font-mono text-white">
                   {count}
@@ -79,7 +82,9 @@ export function SiteHeader() {
           />
           <div className="absolute right-0 top-0 flex h-full w-64 flex-col bg-white p-6 shadow-xl">
             <div className="mb-8 flex items-center justify-between">
-              <span className="text-sm font-semibold uppercase tracking-widest">Menú</span>
+              <span className="text-sm font-semibold uppercase tracking-widest">
+                Menú
+              </span>
               <button type="button" onClick={() => setMenuOpen(false)}>
                 <span className="material-icons-outlined">close</span>
               </button>
@@ -90,7 +95,7 @@ export function SiteHeader() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMenuOpen(false)}
-                  className="text-xs font-medium uppercase tracking-widest text-gray-900"
+                  className={navLinkClass}
                 >
                   {link.label}
                 </Link>

@@ -29,8 +29,13 @@ export async function POST(request: Request) {
 
   const parsed = coffeeFormSchema.safeParse(body);
   if (!parsed.success) {
+    const errors = parsed.error.issues.map((issue) => issue.message);
     return NextResponse.json(
-      { ok: false, message: parsed.error.issues[0]?.message ?? "Datos inválidos" },
+      {
+        ok: false,
+        message: errors[0] ?? "Datos inválidos",
+        errors,
+      },
       { status: 400 },
     );
   }

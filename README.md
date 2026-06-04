@@ -36,6 +36,14 @@ supabase/migrations/001_coffees.sql
 
 Eso crea la tabla `coffees`, políticas RLS, bucket `coffee-images` y **5 cafés de ejemplo** con las imágenes ya incluidas en `/public/images/products`.
 
+Luego ejecuta también:
+
+```
+supabase/migrations/002_coffee_images_and_variants.sql
+```
+
+Eso agrega **galería de fotos** (3–6 por café, una principal) y **precios por tamaño** (150g, 250g, 500g).
+
 ### 3. Arrancar
 
 ```bash
@@ -57,7 +65,7 @@ Rutas:
 | `/admin/coffees/new` | Alta de café |
 | `/admin/coffees/[id]/edit` | Edición |
 
-Campos por café: nombre, slug, codename, notas de cata, descripción, precio 250g, precio 1kg (opcional), imagen, sold out, visible, orden.
+Campos por café: nombre, slug, codename, notas de cata, descripción, **3–6 fotos** (una principal), **precios y stock por 150g / 250g / 500g**, visible, orden.
 
 Imágenes: subí un archivo (va a Supabase Storage) o pegá una URL / ruta local (`/images/products/...`).
 

@@ -1,11 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
+import { COFFEE_RELATIONS_SELECT } from "@/lib/coffees/select";
 import type { Coffee } from "@/lib/coffees/types";
+
+function normalizeCoffee(raw: Coffee): Coffee {
+  return {
+    ...raw,
+    coffee_images: raw.coffee_images ?? [],
+    coffee_variants: raw.coffee_variants ?? [],
+  };
+}
 
 export async function getActiveCoffees(): Promise<Coffee[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("coffees")
-    .select("*")
+    .select(COFFEE_RELATIONS_SELECT)
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
@@ -15,14 +24,14 @@ export async function getActiveCoffees(): Promise<Coffee[]> {
     return [];
   }
 
-  return data ?? [];
+  return (data ?? []).map((row) => normalizeCoffee(row as Coffee));
 }
 
 export async function getCoffeeBySlug(slug: string): Promise<Coffee | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("coffees")
-    .select("*")
+    .select(COFFEE_RELATIONS_SELECT)
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -32,5 +41,5 @@ export async function getCoffeeBySlug(slug: string): Promise<Coffee | null> {
     return null;
   }
 
-  return data;
+  return data ? normalizeCoffee(data as Coffee) : null;
 }
