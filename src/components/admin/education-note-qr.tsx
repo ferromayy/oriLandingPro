@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
 import { useMemo } from "react";
-import { getEducationNotePublicPath, getEducationNotePublicUrl } from "@/lib/site/public-url";
+import {
+  getEducationNotePublicPath,
+  getEducationNoteQrTargets,
+} from "@/lib/site/public-url";
 
 type Props = {
   slug: string;
@@ -11,28 +14,19 @@ type Props = {
   highlight?: boolean;
 };
 
+function downloadQr(canvasId: string, filename: string) {
+  const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
+  if (!canvas) return;
+
+  const link = document.createElement("a");
+  link.download = filename;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
 export function EducationNoteQr({ slug, title, highlight = false }: Props) {
-  const publicUrl = useMemo(() => {
-    if (typeof window === "undefined") {
-      return getEducationNotePublicUrl(slug);
-    }
-    return getEducationNotePublicUrl(
-      slug,
-      process.env.NEXT_PUBLIC_SITE_URL || window.location.origin,
-    );
-  }, [slug]);
-
-  const canvasId = `education-note-qr-${slug}`;
-
-  function downloadQr() {
-    const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
-    if (!canvas) return;
-
-    const link = document.createElement("a");
-    link.download = `ori-educacion-${slug}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-  }
+  const targets = useMemo(() => getEducationNoteQrTargets(slug), [slug]);
+  const vercelConfigured = Boolean(process.env.NEXT_PUBLIC_VERCEL_SITE_URL?.trim());
 
   return (
     <section
@@ -42,51 +36,84 @@ export function EducationNoteQr({ slug, title, highlight = false }: Props) {
           : "border-zinc-200 bg-white"
       }`}
     >
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <div className="shrink-0 rounded-lg bg-white p-3 shadow-sm">
-          <QRCodeCanvas
-            id={canvasId}
-            value={publicUrl}
-            size={180}
-            level="M"
-            marginSize={2}
-            bgColor="#ffffff"
-            fgColor="#111111"
-          />
-        </div>
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+          QR de la nota
+        </p>
+        <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
+        {highlight && (
+          <p className="text-sm text-emerald-800">
+            Nota creada. Descargá el QR según dónde la vayas a compartir.
+          </p>
+        )}
+      </div>
 
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-            QR de la nota
-          </p>
-          <h2 className="mt-2 text-lg font-semibold text-zinc-900">{title}</h2>
-          {highlight && (
-            <p className="mt-2 text-sm text-emerald-800">
-              Nota creada. Escaneá o descargá este QR para compartir el enlace
-              público.
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {targets.map((target) => {
+          const canvasId = `education-note-qr-${slug}-${target.id}`;
+
+          return (
+            <article
+              key={target.id}
+              className="flex flex-col rounded-lg border border-zinc-200 bg-white p-4"
+            >
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-zinc-900">{target.label}</h3>
+                <p className="text-xs text-zinc-500">{target.description}</p>
+              </div>
+
+              <div className="mx-auto my-4 rounded-lg bg-white p-2 shadow-sm">
+                <QRCodeCanvas
+                  id={canvasId}
+                  value={target.url}
+                  size={140}
+                  level="M"
+                  marginSize={2}
+                  bgColor="#ffffff"
+                  fgColor="#111111"
+                />
+              </div>
+
+              <p className="min-h-[2.5rem] break-all font-mono text-[10px] leading-relaxed text-zinc-600">
+                {target.url}
+              </p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  downloadQr(canvasId, `ori-educacion-${slug}-${target.id}.png`)
+                }
+                className="mt-3 w-full rounded-lg border border-zinc-300 px-3 py-2 text-xs font-medium hover:bg-zinc-50"
+              >
+                Descargar PNG
+              </button>
+            </article>
+          );
+        })}
+
+        {!vercelConfigured && (
+          <article className="flex flex-col justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-4">
+            <h3 className="text-sm font-semibold text-zinc-900">Vercel</h3>
+            <p className="mt-2 text-xs text-zinc-600">
+              Cuando despliegues en Vercel, agregá en{" "}
+              <code className="rounded bg-white px-1">.env.local</code>:
             </p>
-          )}
-          <p className="mt-3 break-all font-mono text-xs text-zinc-600">
-            {publicUrl}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={downloadQr}
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-black"
-            >
-              Descargar PNG
-            </button>
-            <Link
-              href={getEducationNotePublicPath(slug)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
-            >
-              Ver nota pública
-            </Link>
-          </div>
-        </div>
+            <p className="mt-2 break-all font-mono text-[10px] text-zinc-700">
+              NEXT_PUBLIC_VERCEL_SITE_URL=https://tu-proyecto.vercel.app
+            </p>
+          </article>
+        )}
+      </div>
+
+      <div className="mt-6">
+        <Link
+          href={getEducationNotePublicPath(slug)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex rounded-lg border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
+        >
+          Ver nota pública (ruta relativa)
+        </Link>
       </div>
     </section>
   );
