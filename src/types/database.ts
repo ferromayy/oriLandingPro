@@ -59,6 +59,7 @@ export type CoffeeUpdate = Partial<CoffeeInsert>;
 export type EducationNoteRow = {
   id: string;
   title: string;
+  slug: string;
   content: string;
   is_active: boolean;
   sort_order: number;

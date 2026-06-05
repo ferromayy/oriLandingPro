@@ -1,17 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getEducationNoteById } from "@/lib/education/queries";
+import { getEducationNoteBySlug } from "@/lib/education/queries";
 
 type Props = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function EducacionNotePage({ params }: Props) {
-  const { id } = await params;
-  const note = await getEducationNoteById(id);
+  const { slug } = await params;
+  const note = await getEducationNoteBySlug(slug);
 
   if (!note) notFound();
 

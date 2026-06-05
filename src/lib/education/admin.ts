@@ -10,6 +10,7 @@ import type { EducationNoteInsert, EducationNoteUpdate } from "@/types/database"
 function toPayload(data: EducationNoteFormData): EducationNoteInsert {
   return {
     title: data.title.trim(),
+    slug: data.slug.trim(),
     content: data.content.trim(),
     is_active: data.is_active,
     sort_order: data.sort_order,

@@ -60,7 +60,7 @@ export default async function EducacionPage() {
 
                 {hasMore && (
                   <Link
-                    href={`/educacion/${note.id}`}
+                    href={`/educacion/${note.slug}`}
                     className="mt-4 inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest text-gray-900 underline underline-offset-4 transition-colors hover:text-gray-600"
                   >
                     Leer nota completa

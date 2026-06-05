@@ -8,6 +8,14 @@ const educationNoteImageSchema = z.object({
 
 export const educationNoteFormSchema = z.object({
   title: z.string().trim().min(1, "El título es obligatorio"),
+  slug: z
+    .string()
+    .trim()
+    .min(1, "El slug es obligatorio")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "El slug solo puede tener minúsculas, números y guiones",
+    ),
   content: z.string().trim().min(1, "El contenido es obligatorio"),
   images: z
     .array(educationNoteImageSchema)

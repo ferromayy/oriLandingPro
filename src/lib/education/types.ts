@@ -1,3 +1,4 @@
+import { slugify } from "@/lib/coffees/types";
 import type { EducationNoteImageRow, EducationNoteRow } from "@/types/database";
 
 export const MAX_EDUCATION_NOTE_IMAGES = 3;
@@ -13,6 +14,7 @@ export type EducationNoteImageForm = {
 
 export type EducationNoteFormData = {
   title: string;
+  slug: string;
   content: string;
   images: EducationNoteImageForm[];
   is_active: boolean;
@@ -32,6 +34,7 @@ export function toEducationNoteFormData(note: EducationNote): EducationNoteFormD
   const normalized = normalizeEducationNote(note);
   return {
     title: normalized.title,
+    slug: normalized.slug ?? "",
     content: normalized.content,
     images: normalized.education_note_images.map((image) => ({
       url: image.url,
@@ -41,3 +44,5 @@ export function toEducationNoteFormData(note: EducationNote): EducationNoteFormD
     sort_order: normalized.sort_order,
   };
 }
+
+export { slugify };

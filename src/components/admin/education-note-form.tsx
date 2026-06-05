@@ -12,6 +12,7 @@ import {
 } from "@/components/admin/form-notifications";
 import {
   MAX_EDUCATION_NOTE_IMAGES,
+  slugify,
   type EducationNoteFormData,
   type EducationNoteImageForm,
 } from "@/lib/education/types";
@@ -22,6 +23,7 @@ import {
 
 const emptyForm: EducationNoteFormData = {
   title: "",
+  slug: "",
   content: "",
   images: [],
   is_active: true,
@@ -36,7 +38,12 @@ type Props = {
 
 export function EducationNoteForm({ mode, noteId, initialData }: Props) {
   const router = useRouter();
-  const [form, setForm] = useState<EducationNoteFormData>(initialData ?? emptyForm);
+  const [form, setForm] = useState<EducationNoteFormData>(() =>
+    initialData
+      ? { ...emptyForm, ...initialData, slug: initialData.slug ?? "" }
+      : emptyForm,
+  );
+  const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [issues, setIssues] = useState<FormValidationIssue[]>([]);
@@ -59,7 +66,13 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
     value: EducationNoteFormData[K],
   ) {
     clearIssues();
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === "title" && !slugTouched) {
+        next.slug = slugify(String(value));
+      }
+      return next;
+    });
   }
 
   function removeImage(index: number) {
@@ -176,7 +189,11 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
         return;
       }
 
-      router.push("/admin/education");
+      if (mode === "create" && data.note?.id) {
+        router.push(`/admin/education/${data.note.id}/edit?created=1`);
+      } else {
+        router.push("/admin/education");
+      }
       router.refresh();
     } catch (err) {
       setIssues([
@@ -212,6 +229,32 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
               }`}
               placeholder="Ej. Métodos de preparación"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700">
+              Slug (URL)
+            </label>
+            <input
+              type="text"
+              value={form.slug ?? ""}
+              onChange={(e) => {
+                setSlugTouched(true);
+                updateField("slug", slugify(e.target.value));
+              }}
+              className={`mt-1 w-full rounded-lg border px-3 py-2 font-mono text-sm ${
+                fieldHasError(issues, "slug") ? inputErrorClass : "border-zinc-300"
+              }`}
+              placeholder="metodos-de-filtrado"
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              Aparece en la URL:{" "}
+              <code className="rounded bg-zinc-100 px-1">
+                /educacion/{form.slug || "tu-slug"}
+              </code>
+              . Elegilo una vez y no lo cambies si querés preservar links
+              externos.
+            </p>
           </div>
 
           <div>

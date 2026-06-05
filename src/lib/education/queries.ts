@@ -20,17 +20,19 @@ export async function getActiveEducationNotes(): Promise<EducationNote[]> {
   return (data ?? []).map((row) => normalizeEducationNote(row as EducationNote));
 }
 
-export async function getEducationNoteById(id: string): Promise<EducationNote | null> {
+export async function getEducationNoteBySlug(
+  slug: string,
+): Promise<EducationNote | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("education_notes")
     .select(EDUCATION_NOTE_SELECT)
-    .eq("id", id)
+    .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
 
   if (error) {
-    console.error("getEducationNoteById:", error.message);
+    console.error("getEducationNoteBySlug:", error.message);
     return null;
   }
 

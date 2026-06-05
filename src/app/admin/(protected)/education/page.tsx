@@ -57,6 +57,9 @@ export default async function AdminEducationPage() {
               <tr key={note.id} className="border-b border-zinc-100 last:border-0">
                 <td className="px-4 py-3">
                   <p className="font-medium text-zinc-900">{note.title}</p>
+                  <p className="mt-1 font-mono text-xs text-zinc-500">
+                    /educacion/{note.slug}
+                  </p>
                   <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
                     {note.content}
                   </p>

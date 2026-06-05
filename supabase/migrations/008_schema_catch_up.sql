@@ -36,5 +36,8 @@ alter table public.coffees add column if not exists altitude text not null defau
 alter table public.coffees
   add column if not exists extended_content_url text not null default '';
 
--- Refrescar caché de PostgREST (Supabase)
+-- 009: slug en notas de educación
+alter table public.education_notes
+  add column if not exists slug text;
+
 notify pgrst, 'reload schema';
