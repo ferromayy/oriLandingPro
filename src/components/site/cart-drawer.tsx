@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCart } from "@/components/site/cart-context";
 import { formatArsPrice, formatSizeLabel } from "@/lib/coffees/types";
 
@@ -34,7 +35,16 @@ export function CartDrawer() {
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {items.length === 0 ? (
-            <p className="text-sm text-gray-500">Tu carrito está vacío</p>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">Tu carrito está vacío</p>
+              <Link
+                href="/cafe"
+                onClick={closeCart}
+                className="inline-flex text-sm font-medium uppercase tracking-wide text-gray-900 underline underline-offset-4 hover:text-gray-600"
+              >
+                Seguir comprando
+              </Link>
+            </div>
           ) : (
             <ul className="space-y-4">
               {items.map((item) => (
@@ -79,18 +89,27 @@ export function CartDrawer() {
           <p className="mb-4 text-right font-mono text-sm">
             Total: <strong>{formatArsPrice(total)}</strong>
           </p>
-          <a
-            href={whatsappCheckoutUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`block w-full rounded-full py-3 text-center text-sm font-medium uppercase tracking-wide text-white shadow-md transition ${
-              items.length === 0
-                ? "pointer-events-none bg-gray-300"
-                : "bg-gray-900 hover:bg-black"
-            }`}
-          >
-            Finalizar compra por WhatsApp
-          </a>
+          <div className="flex flex-col gap-3">
+            <a
+              href={whatsappCheckoutUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`block w-full rounded-full py-3 text-center text-sm font-medium uppercase tracking-wide text-white shadow-md transition ${
+                items.length === 0
+                  ? "pointer-events-none bg-gray-300"
+                  : "bg-gray-900 hover:bg-black"
+              }`}
+            >
+              Finalizar compra por WhatsApp
+            </a>
+            <Link
+              href="/cafe"
+              onClick={closeCart}
+              className="block w-full rounded-full border border-gray-300 py-3 text-center text-sm font-medium uppercase tracking-wide text-gray-900 transition hover:bg-gray-50"
+            >
+              Seguir comprando
+            </Link>
+          </div>
         </div>
       </aside>
     </div>

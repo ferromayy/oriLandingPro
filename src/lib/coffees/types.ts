@@ -1,3 +1,4 @@
+import { normalizeExtendedContentUrl } from "@/lib/coffees/extended-content";
 import type {
   CoffeeImageRow,
   CoffeeRow,
@@ -72,7 +73,9 @@ export function coffeeToFormData(coffee: Coffee): CoffeeFormData {
     tasting_notes: coffee.tasting_notes,
     short_description: coffee.short_description,
     long_description: coffee.long_description,
-    extended_content_url: coffee.extended_content_url ?? "",
+    extended_content_url: normalizeExtendedContentUrl(
+      coffee.extended_content_url ?? "",
+    ),
     origin: coffee.origin,
     varietal: coffee.varietal,
     beneficio: coffee.beneficio,
@@ -103,6 +106,7 @@ export function formatArsPrice(amount: number): string {
 }
 
 export function formatSizeLabel(sizeGrams: CoffeeSizeGrams): string {
+  if (sizeGrams === 1000) return "1kg";
   return `${sizeGrams}g`;
 }
 

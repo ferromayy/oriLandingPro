@@ -33,11 +33,17 @@ export function isCoffeeSoldOut(coffee: Coffee): boolean {
 
 export function getDisplayPrice(coffee: Coffee): number | null {
   const available = getAvailableVariants(coffee);
-  if (available.length === 0) {
-    const fallback = getVariant(coffee, 250) ?? coffee.coffee_variants[0];
-    return fallback?.price ?? null;
-  }
+  if (available.length === 0) return null;
   return Math.min(...available.map((v) => v.price));
+}
+
+/** Precio más bajo configurado (admin), aunque esté sin stock. */
+export function getConfiguredPrice(coffee: Coffee): number | null {
+  const prices = coffee.coffee_variants
+    .filter((v) => v.price > 0)
+    .map((v) => v.price);
+  if (prices.length === 0) return null;
+  return Math.min(...prices);
 }
 
 export function getDefaultVariant(coffee: Coffee): CoffeeVariant | null {

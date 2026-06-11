@@ -1,3 +1,4 @@
+import { normalizeExtendedContentUrl } from "@/lib/coffees/extended-content";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { COFFEE_RELATIONS_SELECT } from "@/lib/coffees/select";
 import type { CoffeeFormData } from "@/lib/coffees/types";
@@ -11,8 +12,8 @@ function toCoffeePayload(data: CoffeeFormData): CoffeeInsert {
     codename: data.codename.trim() || null,
     tasting_notes: data.tasting_notes.trim(),
     short_description: data.short_description.trim(),
-    long_description: data.long_description.trim(),
-    extended_content_url: (data.extended_content_url ?? "").trim(),
+    long_description: "",
+    extended_content_url: normalizeExtendedContentUrl(data.extended_content_url ?? ""),
     origin: data.origin.trim(),
     varietal: data.varietal.trim(),
     beneficio: data.beneficio.trim(),

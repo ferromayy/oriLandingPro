@@ -2,14 +2,15 @@
 
 import { useMemo, useState } from "react";
 import type { Coffee } from "@/lib/coffees/types";
-import { COFFEE_SIZES_GRAMS, formatArsPrice, type CoffeeSizeGrams } from "@/lib/coffees/types";
+import {
+  COFFEE_SIZES_GRAMS,
+  formatArsPrice,
+  formatSizeLabel,
+  type CoffeeSizeGrams,
+} from "@/lib/coffees/types";
 import { GRIND_OPTIONS, type GrindOption } from "@/lib/coffees/product-content";
 import { getPrimaryImage, getVariant, isCoffeeSoldOut } from "@/lib/coffees/helpers";
 import { useCart } from "@/components/site/cart-context";
-
-function formatSizeOption(sizeGrams: number): string {
-  return `${sizeGrams}gr`;
-}
 
 export function ProductPurchasePanel({ coffee }: { coffee: Coffee }) {
   const { addItem } = useCart();
@@ -54,8 +55,12 @@ export function ProductPurchasePanel({ coffee }: { coffee: Coffee }) {
       <div className="mb-10">
         <h1 className="mb-8 font-sans text-2xl font-medium uppercase leading-snug lg:text-3xl">
           {coffee.name}
-          <br />
-          <span>{formatArsPrice(lineTotal)}</span>
+          {!soldOut && (
+            <>
+              <br />
+              <span>{formatArsPrice(lineTotal)}</span>
+            </>
+          )}
         </h1>
 
         {coffee.codename && (
@@ -106,17 +111,19 @@ export function ProductPurchasePanel({ coffee }: { coffee: Coffee }) {
             ) : (
               availableSizes.map((size) => (
                 <option key={size} value={size} className="bg-white text-gray-900">
-                  {formatSizeOption(size)}
+                  {formatSizeLabel(size)}
                 </option>
               ))
             )}
           </select>
         </div>
 
-        <div className="flex items-center justify-between border-b border-gray-200 py-4">
-          <span className="text-gray-600">TOTAL:</span>
-          <span className="text-right text-lg font-bold">{formatArsPrice(lineTotal)}</span>
-        </div>
+        {!soldOut && (
+          <div className="flex items-center justify-between border-b border-gray-200 py-4">
+            <span className="text-gray-600">TOTAL:</span>
+            <span className="text-right text-lg font-bold">{formatArsPrice(lineTotal)}</span>
+          </div>
+        )}
 
         <div className="mt-10 grid grid-cols-2 gap-4">
           <div className="flex items-center justify-between rounded-full border border-gray-200 px-4 py-3 transition-colors hover:bg-gray-100">

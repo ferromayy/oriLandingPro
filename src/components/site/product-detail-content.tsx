@@ -4,6 +4,7 @@ import type { Coffee } from "@/lib/coffees/types";
 import type { DescriptionBlock } from "@/lib/coffees/product-content";
 import {
   buildProductStoryPreview,
+  getExtendedContentUrl,
   hasExtendedContentUrl,
   hasProductStoryPreview,
   hasTechSheet,
@@ -14,7 +15,7 @@ import { ExtendedContentCatch } from "@/components/site/extended-content-catch";
 
 export function ProductDetailContent({ coffee }: { coffee: Coffee }) {
   const storyBlocks = buildProductStoryPreview(coffee);
-  const extendedUrl = coffee.extended_content_url?.trim();
+  const extendedUrl = getExtendedContentUrl(coffee);
   const showExtendedCatch = hasExtendedContentUrl(coffee);
   const tastingNotes = parseTastingNotes(coffee.tasting_notes);
   const showTech = hasTechSheet(coffee);

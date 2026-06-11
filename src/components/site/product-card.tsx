@@ -42,7 +42,7 @@ export function ProductCard({ coffee }: { coffee: Coffee }) {
         <h3 className="text-sm font-medium uppercase tracking-widest text-gray-900">
           {coffee.name}
         </h3>
-        {price !== null && (
+        {!soldOut && price !== null && (
           <p className="shrink-0 text-sm font-medium text-gray-900">
             {formatArsPrice(price)}
           </p>

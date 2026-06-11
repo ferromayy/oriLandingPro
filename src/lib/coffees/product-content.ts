@@ -1,3 +1,4 @@
+import { getExtendedContentHref } from "@/lib/coffees/extended-content";
 import type { Coffee } from "@/lib/coffees/types";
 
 export const GRIND_OPTIONS = [
@@ -32,42 +33,6 @@ function splitParagraphParts(text: string): string[] {
     .filter(Boolean);
 }
 
-function parseDescriptionBlock(block: string): DescriptionBlock {
-  const trimmed = block.trim();
-
-  const boldMarkdown = trimmed.match(/^\*\*(.+?)\*\*\s*([\s\S]*)$/);
-  if (boldMarkdown) {
-    return {
-      type: "bold-lead",
-      lead: boldMarkdown[1],
-      parts: splitParagraphParts(boldMarkdown[2] ?? ""),
-    };
-  }
-
-  const boldLeadSentence = trimmed.match(
-    /^(Hablemos un poco más del [^.]+\.)\s*([\s\S]*)$/i,
-  );
-  if (boldLeadSentence) {
-    return {
-      type: "bold-lead",
-      lead: boldLeadSentence[1],
-      parts: splitParagraphParts(boldLeadSentence[2] ?? ""),
-    };
-  }
-
-  return { type: "paragraph", parts: splitParagraphParts(trimmed) };
-}
-
-export function parseLongDescription(text: string): DescriptionBlock[] {
-  if (!text.trim()) return [];
-
-  return text
-    .trim()
-    .split(/\n\n+/)
-    .filter((block) => block.trim())
-    .map(parseDescriptionBlock);
-}
-
 export function hasTechSheet(coffee: {
   origin: string;
   varietal: string;
@@ -79,41 +44,29 @@ export function hasTechSheet(coffee: {
   );
 }
 
-/** Combina descripción corta + larga como en oricafe.com.ar */
+/** Texto visible en la ficha del producto (siempre la descripción corta). */
 export function buildProductStory(coffee: Coffee): DescriptionBlock[] {
-  const blocks: DescriptionBlock[] = [];
+  if (!coffee.short_description.trim()) return [];
 
-  if (coffee.short_description.trim()) {
-    blocks.push({
+  return [
+    {
       type: "paragraph",
       parts: splitParagraphParts(coffee.short_description),
-    });
-  }
-
-  blocks.push(...parseLongDescription(coffee.long_description));
-
-  return blocks;
+    },
+  ];
 }
 
-/** En la ficha del producto: si hay URL extendida, solo el adelanto (descripción corta). */
+/** Enlace a la nota de educación vinculada (vacío = sin versión extendida). */
+export function getExtendedContentUrl(coffee: Coffee): string | null {
+  return getExtendedContentHref(coffee.extended_content_url ?? "");
+}
+
 export function buildProductStoryPreview(coffee: Coffee): DescriptionBlock[] {
-  const extendedUrl = coffee.extended_content_url?.trim();
-
-  if (extendedUrl) {
-    if (!coffee.short_description.trim()) return [];
-    return [
-      {
-        type: "paragraph",
-        parts: splitParagraphParts(coffee.short_description),
-      },
-    ];
-  }
-
   return buildProductStory(coffee);
 }
 
 export function hasExtendedContentUrl(coffee: Coffee): boolean {
-  return Boolean(coffee.extended_content_url?.trim());
+  return getExtendedContentUrl(coffee) !== null;
 }
 
 export function hasProductStory(coffee: Coffee): boolean {

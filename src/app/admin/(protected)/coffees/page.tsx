@@ -3,7 +3,7 @@ import Image from "next/image";
 import { getAllCoffeesAdmin } from "@/lib/coffees/admin";
 import { formatArsPrice } from "@/lib/coffees/types";
 import {
-  getDisplayPrice,
+  getConfiguredPrice,
   getPrimaryImage,
   isCoffeeSoldOut,
 } from "@/lib/coffees/helpers";
@@ -25,7 +25,7 @@ export default async function AdminCoffeesPage() {
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Cafés</h1>
           <p className="mt-1 text-sm text-zinc-600">
-            Galería de 3–6 fotos y precios por 150g, 250g y 500g.
+            Galería de 3–6 fotos y precios por 150g, 250g, 500g y 1kg.
           </p>
         </div>
         <Link
@@ -56,7 +56,7 @@ export default async function AdminCoffeesPage() {
           <tbody>
             {coffees.map((coffee) => {
               const imageUrl = getPrimaryImage(coffee);
-              const price = getDisplayPrice(coffee);
+              const price = getConfiguredPrice(coffee);
               const soldOut = isCoffeeSoldOut(coffee);
 
               return (
@@ -76,6 +76,11 @@ export default async function AdminCoffeesPage() {
                       <div>
                         <p className="font-medium text-zinc-900">{coffee.name}</p>
                         <p className="text-xs text-zinc-500">/{coffee.slug}</p>
+                        {coffee.tasting_notes.trim() && (
+                          <p className="mt-1 line-clamp-2 text-xs text-zinc-600">
+                            Notas: {coffee.tasting_notes}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </td>

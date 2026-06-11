@@ -24,6 +24,17 @@ import {
   inputErrorClass,
   sectionErrorClass,
 } from "@/components/admin/form-notifications";
+import {
+  extractEducationSlugFromUrl,
+  normalizeExtendedContentUrl,
+} from "@/lib/coffees/extended-content";
+import { getEducationNotePublicPath } from "@/lib/site/public-url";
+
+export type EducationNoteOption = {
+  id: string;
+  title: string;
+  slug: string;
+};
 
 const emptyForm: CoffeeFormData = {
   name: "",
@@ -53,12 +64,26 @@ type Props = {
   mode: "create" | "edit";
   coffeeId?: string;
   initialData?: CoffeeFormData;
+  educationNotes?: EducationNoteOption[];
 };
 
-export function CoffeeForm({ mode, coffeeId, initialData }: Props) {
+export function CoffeeForm({
+  mode,
+  coffeeId,
+  initialData,
+  educationNotes = [],
+}: Props) {
   const router = useRouter();
   const [form, setForm] = useState<CoffeeFormData>(() =>
-    initialData ? { ...emptyForm, ...initialData, extended_content_url: initialData.extended_content_url ?? "" } : emptyForm,
+    initialData
+      ? {
+          ...emptyForm,
+          ...initialData,
+          extended_content_url: normalizeExtendedContentUrl(
+            initialData.extended_content_url ?? "",
+          ),
+        }
+      : emptyForm,
   );
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [loading, setLoading] = useState(false);
@@ -264,6 +289,8 @@ export function CoffeeForm({ mode, coffeeId, initialData }: Props) {
   }
 
   const imagesMissing = form.images.length < MIN_COFFEE_IMAGES;
+  const linkedEducationSlug =
+    extractEducationSlugFromUrl(form.extended_content_url ?? "") ?? "";
 
   return (
     <>
@@ -280,7 +307,7 @@ export function CoffeeForm({ mode, coffeeId, initialData }: Props) {
 
         <section
           id={SECTION_IDS.general}
-          className={`space-y-4 ${fieldHasError(issues, "name") || fieldHasError(issues, "slug") || fieldHasError(issues, "tasting_notes") ? sectionErrorClass : ""}`}
+          className={`space-y-4 ${fieldHasError(issues, "name") || fieldHasError(issues, "slug") ? sectionErrorClass : ""}`}
         >
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
             Datos generales
@@ -325,16 +352,6 @@ export function CoffeeForm({ mode, coffeeId, initialData }: Props) {
             </Field>
           </div>
 
-          <Field label="Notas de cata *" error={fieldHasError(issues, "tasting_notes")}>
-            <textarea
-              rows={2}
-              value={form.tasting_notes}
-              onChange={(e) => updateField("tasting_notes", e.target.value)}
-              className={inputClass(fieldHasError(issues, "tasting_notes"))}
-              placeholder="Chocolate amargo, cáscara de naranja y frutado"
-            />
-          </Field>
-
           <Field
             label="Descripción corta *"
             error={fieldHasError(issues, "short_description")}
@@ -347,49 +364,78 @@ export function CoffeeForm({ mode, coffeeId, initialData }: Props) {
               placeholder={"Párrafo introductorio (como en oricafe.com.ar).\n\nSepará bloques con una línea en blanco para saltos visuales."}
             />
             <p className="mt-1 text-xs text-zinc-500">
-              Primer bloque de texto bajo el producto. Cada línea en blanco = salto
-              de párrafo visual.
-            </p>
-          </Field>
-
-          <Field label="Descripción larga">
-            <textarea
-              rows={10}
-              value={form.long_description}
-              onChange={(e) => updateField("long_description", e.target.value)}
-              className={inputClass(false)}
-              placeholder={"**Hablemos un poco más del varietal.**\n\nReconocido por su exclusividad...\n\n**Hablemos un poco más del beneficio.**\n\nLos cafés Honey se destacan..."}
-            />
-            <p className="mt-1 text-xs text-zinc-500">
-              Secciones con título en negrita. Usá{" "}
-              <code className="rounded bg-zinc-100 px-1">**Título.**</code> o el
-              texto &quot;Hablemos un poco más del…&quot; al inicio de un bloque.
+              Texto que se muestra en la ficha del producto. Si vinculás una nota
+              de Educación, este párrafo funciona como adelanto.
             </p>
           </Field>
 
           <Field
-            label="URL contenido extendido"
+            label="Nota de educación vinculada"
             error={fieldHasError(issues, "extended_content_url")}
           >
-            <input
-              type="url"
-              value={form.extended_content_url ?? ""}
-              onChange={(e) => updateField("extended_content_url", e.target.value)}
+            <select
+              value={linkedEducationSlug}
+              onChange={(e) =>
+                updateField(
+                  "extended_content_url",
+                  e.target.value ? getEducationNotePublicPath(e.target.value) : "",
+                )
+              }
               className={inputClass(fieldHasError(issues, "extended_content_url"))}
-              placeholder="https://..."
-            />
+            >
+              <option value="">Sin nota vinculada</option>
+              {educationNotes.map((note) => (
+                <option key={note.id} value={note.slug}>
+                  {note.title}
+                </option>
+              ))}
+            </select>
             <p className="mt-1 text-xs text-zinc-500">
-              Opcional. En el detalle del producto se muestra la descripción
-              corta como adelanto y un botón &quot;Seguir leyendo&quot; que lleva
-              a esta URL con el contenido extendido.
+              <strong>Opcional.</strong> El contenido largo va en Admin →
+              Educación. Si no vinculás ninguna, el producto se guarda igual y
+              solo se muestra la descripción corta.
             </p>
+            {linkedEducationSlug && (
+              <p className="mt-1 font-mono text-xs text-zinc-500">
+                {getEducationNotePublicPath(linkedEducationSlug)}
+              </p>
+            )}
+            {educationNotes.length === 0 && (
+              <p className="mt-1 text-xs text-zinc-500">
+                Todavía no hay notas en Educación. Podés guardar el café sin
+                vincular ninguna.
+              </p>
+            )}
           </Field>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            Ficha técnica
-          </h2>
+        <section
+          className={`space-y-4 ${fieldHasError(issues, "tasting_notes") ? sectionErrorClass : ""}`}
+        >
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+              Ficha técnica y notas de cata
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              Origen, varietal y notas de cata se muestran en la ficha pública del
+              producto.
+            </p>
+          </div>
+
+          <Field label="Notas de cata *" error={fieldHasError(issues, "tasting_notes")}>
+            <textarea
+              rows={3}
+              value={form.tasting_notes}
+              onChange={(e) => updateField("tasting_notes", e.target.value)}
+              className={inputClass(fieldHasError(issues, "tasting_notes"))}
+              placeholder="Chocolate amargo, cáscara de naranja, frutado"
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              Separá cada nota con coma. Ej:{" "}
+              <span className="font-mono">Jazmín, Limoncillo, Panela</span>
+            </p>
+          </Field>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Origen">
               <input
@@ -517,7 +563,9 @@ export function CoffeeForm({ mode, coffeeId, initialData }: Props) {
               Tamaños y precios *
             </h2>
             <p className="mt-1 text-xs text-zinc-500">
-              150g, 250g y 500g — precio en ARS y disponibilidad por tamaño.
+              150g, 250g, 500g y 1kg — precio en ARS y disponibilidad por tamaño. Si
+              ningún tamaño tiene stock, el producto se muestra como{" "}
+              <strong>Sold Out</strong> pero sigue visible en la landing.
             </p>
           </div>
 

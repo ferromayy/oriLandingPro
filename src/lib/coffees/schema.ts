@@ -1,3 +1,4 @@
+import { isValidExtendedContentUrl } from "@/lib/coffees/extended-content";
 import { z } from "zod";
 import {
   COFFEE_SIZES_GRAMS,
@@ -16,8 +17,9 @@ const variantSchema = z.object({
   size_grams: z.coerce
     .number()
     .int()
-    .refine((v): v is 150 | 250 | 500 =>
-      COFFEE_SIZES_GRAMS.includes(v as 150 | 250 | 500),
+    .refine(
+      (v): v is (typeof COFFEE_SIZES_GRAMS)[number] =>
+        COFFEE_SIZES_GRAMS.includes(v as (typeof COFFEE_SIZES_GRAMS)[number]),
     ),
   price: z.coerce.number().int().min(0),
   is_available: z.coerce.boolean(),
@@ -40,19 +42,10 @@ export const coffeeFormSchema = z
       .string()
       .optional()
       .default("")
-      .refine(
-        (value) => {
-          const trimmed = value.trim();
-          if (!trimmed) return true;
-          try {
-            new URL(trimmed);
-            return true;
-          } catch {
-            return false;
-          }
-        },
-        { message: "La URL del contenido extendido no es válida" },
-      ),
+      .refine(isValidExtendedContentUrl, {
+        message:
+          "La URL debe apuntar a una nota de Educación (ej. /educacion/metodos-de-filtrado)",
+      }),
     origin: z.string().optional().default(""),
     varietal: z.string().optional().default(""),
     beneficio: z.string().optional().default(""),
@@ -66,7 +59,10 @@ export const coffeeFormSchema = z
       .max(MAX_COFFEE_IMAGES, `Máximo ${MAX_COFFEE_IMAGES} fotos por café`),
     variants: z
       .array(variantSchema)
-      .length(COFFEE_SIZES_GRAMS.length, "Faltan tamaños 150g, 250g o 500g"),
+      .length(
+        COFFEE_SIZES_GRAMS.length,
+        "Faltan tamaños: 150g, 250g, 500g o 1kg",
+      ),
     is_active: z.coerce.boolean().optional().default(true),
     sort_order: z.coerce.number().int().optional().default(0),
   })
@@ -77,18 +73,6 @@ export const coffeeFormSchema = z
         code: "custom",
         message: "Seleccioná exactamente una foto como principal",
         path: ["images"],
-      });
-    }
-
-    const availableVariants = data.variants.filter(
-      (v) => v.is_available && v.price > 0,
-    );
-    if (data.is_active && availableVariants.length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        message:
-          "Si el café es visible en la landing, al menos un tamaño debe tener precio y estar en stock",
-        path: ["variants"],
       });
     }
 
