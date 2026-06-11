@@ -1,4 +1,5 @@
 import { formatArsPrice } from "@/lib/coffees/types";
+import { formatOrderCode } from "@/lib/orders/types";
 import type { CoffeeSizeGrams } from "@/types/database";
 import type { GrindOption } from "@/lib/coffees/product-content";
 
@@ -33,7 +34,11 @@ function formatOrderProductTitle(codename: string | null, name: string): string 
 export function buildWhatsAppOrderMessage(
   items: WhatsAppOrderLine[],
   total: number,
+  orderNumber: number | string,
 ): string {
+  const orderCode =
+    typeof orderNumber === "number" ? formatOrderCode(orderNumber) : orderNumber;
+
   const lines = items.map((item, index) => {
     const title = formatOrderProductTitle(item.codename, item.name);
     const lineTotal = item.price * item.quantity;
@@ -49,6 +54,7 @@ export function buildWhatsAppOrderMessage(
 
   return [
     "☕ PEDIDO DE CAFÉ",
+    `Pedido #${orderCode}`,
     "",
     "Hola! Quiero realizar el siguiente pedido:",
     "",
@@ -61,10 +67,11 @@ export function buildWhatsAppOrderMessage(
   ].join("\n");
 }
 
-export function buildWhatsAppCheckoutUrl(
-  items: WhatsAppOrderLine[],
-  total: number,
-): string {
-  const text = encodeURIComponent(buildWhatsAppOrderMessage(items, total));
-  return `https://wa.me/${WHATSAPP_ORDER_NUMBER}?text=${text}`;
+export function buildWhatsAppCheckoutUrl(message: string): string {
+  const text = encodeURIComponent(message);
+  return `https://api.whatsapp.com/send?phone=${WHATSAPP_ORDER_NUMBER}&text=${text}`;
+}
+
+export function openWhatsAppWithMessage(message: string): void {
+  window.open(buildWhatsAppCheckoutUrl(message), "_blank", "noopener,noreferrer");
 }

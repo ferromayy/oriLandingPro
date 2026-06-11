@@ -12,8 +12,6 @@ import type { Coffee } from "@/lib/coffees/types";
 import type { CoffeeSizeGrams } from "@/types/database";
 import type { GrindOption } from "@/lib/coffees/product-content";
 import { getVariant } from "@/lib/coffees/helpers";
-import { buildWhatsAppCheckoutUrl } from "@/lib/site/whatsapp-order";
-
 export type CartItem = {
   coffeeId: string;
   sizeGrams: CoffeeSizeGrams;
@@ -44,7 +42,6 @@ type CartContextValue = {
   addItem: (params: AddItemParams) => void;
   removeItem: (coffeeId: string, sizeGrams: CoffeeSizeGrams, grind: GrindOption) => void;
   clearCart: () => void;
-  whatsappCheckoutUrl: string;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -141,11 +138,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [items],
   );
 
-  const whatsappCheckoutUrl = useMemo(
-    () => buildWhatsAppCheckoutUrl(items, total),
-    [items, total],
-  );
-
   const value = useMemo<CartContextValue>(
     () => ({
       items,
@@ -158,9 +150,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       addItem,
       removeItem,
       clearCart,
-      whatsappCheckoutUrl,
     }),
-    [items, isOpen, total, count, addItem, removeItem, clearCart, whatsappCheckoutUrl],
+    [items, isOpen, total, count, addItem, removeItem, clearCart],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

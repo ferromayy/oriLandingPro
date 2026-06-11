@@ -86,6 +86,30 @@ export type EducationNoteImageRow = {
   created_at: string;
 };
 
+export type CustomerOrderStatus = "pending" | "completed" | "cancelled";
+
+export type CustomerOrderRow = {
+  id: string;
+  order_number: number;
+  order_code: number;
+  status: CustomerOrderStatus;
+  items: Json;
+  total: number;
+  whatsapp_message: string;
+  created_at: string;
+};
+
+export type CustomerOrderInsert = Omit<
+  CustomerOrderRow,
+  "id" | "created_at" | "status"
+> & {
+  id?: string;
+  status?: CustomerOrderStatus;
+  created_at?: string;
+};
+
+export type CustomerOrderUpdate = Partial<CustomerOrderInsert>;
+
 export type Database = {
   public: {
     Tables: {
@@ -123,6 +147,12 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<EducationNoteImageRow>;
+        Relationships: [];
+      };
+      customer_orders: {
+        Row: CustomerOrderRow;
+        Insert: CustomerOrderInsert;
+        Update: CustomerOrderUpdate;
         Relationships: [];
       };
     };

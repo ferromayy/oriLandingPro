@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { useCart } from "@/components/site/cart-context";
 import { formatArsPrice, formatSizeLabel } from "@/lib/coffees/types";
+import { createOrderAndOpenWhatsApp } from "@/lib/orders/checkout";
 
 export function CartDrawer() {
   const {
@@ -12,8 +14,26 @@ export function CartDrawer() {
     items,
     total,
     removeItem,
-    whatsappCheckoutUrl,
   } = useCart();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  async function handleCheckout() {
+    if (items.length === 0 || isCheckingOut) return;
+
+    setCheckoutError(null);
+    setIsCheckingOut(true);
+
+    try {
+      await createOrderAndOpenWhatsApp(items, total);
+    } catch (err) {
+      setCheckoutError(
+        err instanceof Error ? err.message : "No se pudo registrar el pedido",
+      );
+    } finally {
+      setIsCheckingOut(false);
+    }
+  }
 
   if (!isOpen) return null;
 
@@ -86,22 +106,27 @@ export function CartDrawer() {
         </div>
 
         <div className="sticky bottom-0 border-t border-gray-200 bg-white px-6 py-4">
+          {checkoutError && (
+            <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+              {checkoutError}
+            </p>
+          )}
           <p className="mb-4 text-right font-mono text-sm">
             Total: <strong>{formatArsPrice(total)}</strong>
           </p>
           <div className="flex flex-col gap-3">
-            <a
-              href={whatsappCheckoutUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              disabled={items.length === 0 || isCheckingOut}
+              onClick={handleCheckout}
               className={`block w-full rounded-full py-3 text-center text-sm font-medium uppercase tracking-wide text-white shadow-md transition ${
-                items.length === 0
-                  ? "pointer-events-none bg-gray-300"
+                items.length === 0 || isCheckingOut
+                  ? "cursor-not-allowed bg-gray-300"
                   : "bg-gray-900 hover:bg-black"
               }`}
             >
-              Finalizar compra por WhatsApp
-            </a>
+              {isCheckingOut ? "Registrando pedido…" : "Finalizar compra por WhatsApp"}
+            </button>
             <Link
               href="/cafe"
               onClick={closeCart}

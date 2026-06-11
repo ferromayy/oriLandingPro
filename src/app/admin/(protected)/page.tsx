@@ -1,19 +1,23 @@
 import Link from "next/link";
 import { getAllCoffeesAdmin } from "@/lib/coffees/admin";
 import { getAllEducationNotesAdmin } from "@/lib/education/admin";
+import { getAllCustomerOrdersAdmin } from "@/lib/orders/admin";
 
 export default async function AdminDashboardPage() {
   let coffeeCount = 0;
   let educationCount = 0;
+  let orderCount = 0;
   let error: string | null = null;
 
   try {
-    const [coffees, notes] = await Promise.all([
+    const [coffees, notes, orders] = await Promise.all([
       getAllCoffeesAdmin(),
       getAllEducationNotesAdmin(),
+      getAllCustomerOrdersAdmin(),
     ]);
     coffeeCount = coffees.length;
     educationCount = notes.length;
+    orderCount = orders.length;
   } catch (err) {
     error = err instanceof Error ? err.message : "Error al conectar con Supabase";
   }
@@ -23,7 +27,7 @@ export default async function AdminDashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900">Dashboard</h1>
         <p className="mt-1 text-sm text-zinc-600">
-          Gestioná los cafés y las notas de educación del sitio.
+          Gestioná cafés, pedidos y notas de educación del sitio.
         </p>
       </div>
 
@@ -39,10 +43,20 @@ export default async function AdminDashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-zinc-200 bg-white p-6">
           <p className="text-sm text-zinc-500">Cafés en catálogo</p>
           <p className="mt-2 text-3xl font-semibold text-zinc-900">{coffeeCount}</p>
+        </div>
+        <div className="rounded-xl border border-zinc-200 bg-white p-6">
+          <p className="text-sm text-zinc-500">Pedidos registrados</p>
+          <p className="mt-2 text-3xl font-semibold text-zinc-900">{orderCount}</p>
+          <Link
+            href="/admin/orders"
+            className="mt-3 inline-block text-xs font-medium text-zinc-600 underline hover:text-zinc-900"
+          >
+            Ver pedidos
+          </Link>
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white p-6">
           <p className="text-sm text-zinc-500">Notas de educación</p>
