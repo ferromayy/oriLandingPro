@@ -1,5 +1,6 @@
 import { getExtendedContentHref } from "@/lib/coffees/extended-content";
 import type { Coffee } from "@/lib/coffees/types";
+import { EDUCATION_PUBLIC_ENABLED } from "@/lib/site/features";
 
 export const GRIND_OPTIONS = [
   "Café en grano",
@@ -58,6 +59,7 @@ export function buildProductStory(coffee: Coffee): DescriptionBlock[] {
 
 /** Enlace a la nota de educación vinculada (vacío = sin versión extendida). */
 export function getExtendedContentUrl(coffee: Coffee): string | null {
+  if (!EDUCATION_PUBLIC_ENABLED) return null;
   return getExtendedContentHref(coffee.extended_content_url ?? "");
 }
 

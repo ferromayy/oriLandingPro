@@ -4,11 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/components/site/cart-context";
+import { EDUCATION_PUBLIC_ENABLED } from "@/lib/site/features";
 
 const navLinks = [
   { href: "/", label: "Inicio" },
   { href: "/cafe", label: "Café" },
-  { href: "/educacion", label: "Educación" },
+  ...(EDUCATION_PUBLIC_ENABLED
+    ? [{ href: "/educacion", label: "Educación" as const }]
+    : []),
   { href: "/mayoristas", label: "Mayoristas y asesoramiento" },
   { href: "/nosotros", label: "Nosotros" },
 ];

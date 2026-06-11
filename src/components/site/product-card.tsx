@@ -2,25 +2,24 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Coffee } from "@/lib/coffees/types";
 import { formatArsPrice } from "@/lib/coffees/types";
+import { ProductBadges } from "@/components/site/product-badges";
 import {
   getDisplayPrice,
   getPrimaryImage,
+  isCoffeeLaunchDay,
   isCoffeeSoldOut,
 } from "@/lib/coffees/helpers";
 
 export function ProductCard({ coffee }: { coffee: Coffee }) {
   const imageUrl = getPrimaryImage(coffee);
   const soldOut = isCoffeeSoldOut(coffee);
+  const isLaunch = isCoffeeLaunchDay(coffee);
   const price = getDisplayPrice(coffee);
 
   return (
     <Link href={`/producto/${coffee.slug}`} className="group flex flex-col bg-white">
       <div className="relative mb-4 aspect-square overflow-hidden">
-        {soldOut && (
-          <span className="absolute left-3 top-3 z-10 bg-black px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-white">
-            Sold Out
-          </span>
-        )}
+        <ProductBadges soldOut={soldOut} isLaunch={isLaunch} />
         {imageUrl ? (
           <Image
             src={imageUrl}

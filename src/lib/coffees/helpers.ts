@@ -1,6 +1,27 @@
 import type { Coffee, CoffeeImage, CoffeeVariant } from "@/lib/coffees/types";
 import { COFFEE_SIZES_GRAMS } from "@/lib/coffees/types";
 
+const LAUNCH_TIMEZONE = "America/Argentina/Cordoba";
+
+function toLocalDateKey(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+/** True el mismo día calendario en que se creó el café (hora Argentina). */
+export function isCoffeeLaunchDay(coffee: { created_at: string }): boolean {
+  const created = new Date(coffee.created_at);
+  if (Number.isNaN(created.getTime())) return false;
+  return (
+    toLocalDateKey(created, LAUNCH_TIMEZONE) ===
+    toLocalDateKey(new Date(), LAUNCH_TIMEZONE)
+  );
+}
+
 export function sortImages(images: CoffeeImage[]): CoffeeImage[] {
   return [...images].sort((a, b) => a.sort_order - b.sort_order);
 }

@@ -1,14 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   educationNoteHasMore,
   getEducationExcerpt,
 } from "@/lib/education/content";
 import { getActiveEducationNotes } from "@/lib/education/queries";
+import { EDUCATION_PUBLIC_ENABLED } from "@/lib/site/features";
 
 export const dynamic = "force-dynamic";
 
 export default async function EducacionPage() {
+  if (!EDUCATION_PUBLIC_ENABLED) notFound();
+
   const notes = await getActiveEducationNotes();
 
   return (

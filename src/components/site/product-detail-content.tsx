@@ -1,5 +1,4 @@
 import { Fragment } from "react";
-import Image from "next/image";
 import type { Coffee } from "@/lib/coffees/types";
 import type { DescriptionBlock } from "@/lib/coffees/product-content";
 import {
@@ -10,8 +9,8 @@ import {
   hasTechSheet,
   parseTastingNotes,
 } from "@/lib/coffees/product-content";
-import { getGalleryImages } from "@/lib/coffees/helpers";
 import { ExtendedContentCatch } from "@/components/site/extended-content-catch";
+import { OriBrandBand } from "@/components/site/ori-brand-band";
 
 export function ProductDetailContent({ coffee }: { coffee: Coffee }) {
   const storyBlocks = buildProductStoryPreview(coffee);
@@ -20,8 +19,6 @@ export function ProductDetailContent({ coffee }: { coffee: Coffee }) {
   const tastingNotes = parseTastingNotes(coffee.tasting_notes);
   const showTech = hasTechSheet(coffee);
   const showStory = hasProductStoryPreview(coffee);
-  const images = getGalleryImages(coffee);
-  const heroBandImage = images[images.length - 1]?.url;
 
   return (
     <>
@@ -87,18 +84,7 @@ export function ProductDetailContent({ coffee }: { coffee: Coffee }) {
         </div>
       </section>
 
-      {heroBandImage && (
-        <section className="relative h-[60vh] w-full overflow-hidden">
-          <Image
-            src={heroBandImage}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-black/20" />
-        </section>
-      )}
+      <OriBrandBand />
     </>
   );
 }
