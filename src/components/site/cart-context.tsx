@@ -9,16 +9,17 @@ import {
   useState,
 } from "react";
 import type { Coffee } from "@/lib/coffees/types";
-import { formatArsPrice, formatSizeLabel } from "@/lib/coffees/types";
 import type { CoffeeSizeGrams } from "@/types/database";
 import type { GrindOption } from "@/lib/coffees/product-content";
 import { getVariant } from "@/lib/coffees/helpers";
+import { buildWhatsAppCheckoutUrl } from "@/lib/site/whatsapp-order";
 
 export type CartItem = {
   coffeeId: string;
   sizeGrams: CoffeeSizeGrams;
   grind: GrindOption;
   name: string;
+  codename: string | null;
   price: number;
   quantity: number;
   imageUrl: string | null;
@@ -47,7 +48,7 @@ type CartContextValue = {
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
-const STORAGE_KEY = "ori-cart-v3";
+const STORAGE_KEY = "ori-cart-v4";
 
 function itemKey(coffeeId: string, sizeGrams: number, grind: string) {
   return `${coffeeId}:${sizeGrams}:${grind}`;
@@ -100,6 +101,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             sizeGrams,
             grind,
             name: coffee.name,
+            codename: coffee.codename?.trim() || null,
             price: variant.price,
             quantity,
             imageUrl,
@@ -139,16 +141,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [items],
   );
 
-  const whatsappCheckoutUrl = useMemo(() => {
-    const lines = items.map(
-      (i) =>
-        `• ${i.name} (${formatSizeLabel(i.sizeGrams)}, ${i.grind}) x${i.quantity} — ${formatArsPrice(i.price * i.quantity)}`,
-    );
-    const text = encodeURIComponent(
-      `Hola Orí! Quiero consultar por mi pedido:\n\n${lines.join("\n")}\n\nTotal: ${formatArsPrice(total)}`,
-    );
-    return `https://wa.me/543513053755?text=${text}`;
-  }, [items, total]);
+  const whatsappCheckoutUrl = useMemo(
+    () => buildWhatsAppCheckoutUrl(items, total),
+    [items, total],
+  );
 
   const value = useMemo<CartContextValue>(
     () => ({
