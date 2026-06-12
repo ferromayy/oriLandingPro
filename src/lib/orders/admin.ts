@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { CreateOrderInput } from "@/lib/orders/schema";
 import type { CustomerOrder, OrderStatus } from "@/lib/orders/types";
+import type { CustomerOrderInsert } from "@/types/database";
 import { legacyOrderCodeFromNumber, ORDER_CODE_START } from "@/lib/orders/types";
 import { buildWhatsAppOrderMessage } from "@/lib/site/whatsapp-order";
 
@@ -18,25 +19,42 @@ function normalizeOrder(raw: CustomerOrder): CustomerOrder {
   };
 }
 
-async function getNextOrderSlots(): Promise<{ order_number: number; order_code: number }> {
+function isMissingColumnError(error: { message?: string } | null, column: string): boolean {
+  const message = error?.message?.toLowerCase() ?? "";
+  return message.includes(column.toLowerCase()) && message.includes("schema cache");
+}
+
+type OrderSlots =
+  | { legacySchema: true }
+  | { legacySchema: false; order_number: number; order_code: number };
+
+async function getNextOrderSlots(): Promise<OrderSlots> {
   const supabase = createAdminClient();
 
-  const [{ data: numberRow }, { data: codeRow }] = await Promise.all([
-    supabase
-      .from("customer_orders")
-      .select("order_number")
-      .order("order_number", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("customer_orders")
-      .select("order_code")
-      .order("order_code", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const { data: codeRow, error: codeError } = await supabase
+    .from("customer_orders")
+    .select("order_code")
+    .order("order_code", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (isMissingColumnError(codeError, "order_code")) {
+    return { legacySchema: true };
+  }
+
+  if (codeError) throw new Error(codeError.message);
+
+  const { data: numberRow, error: numberError } = await supabase
+    .from("customer_orders")
+    .select("order_number")
+    .order("order_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (numberError) throw new Error(numberError.message);
 
   return {
+    legacySchema: false,
     order_number: (numberRow?.order_number ?? 0) + 1,
     order_code: (codeRow?.order_code ?? ORDER_CODE_START - 1) + 1,
   };
@@ -73,19 +91,34 @@ export async function createCustomerOrder(
     "…",
   );
 
+  const insertPayload: CustomerOrderInsert = slots.legacySchema
+    ? {
+        items: input.items,
+        total: input.total,
+        whatsapp_message: placeholderMessage,
+      }
+    : {
+        order_number: slots.order_number,
+        order_code: slots.order_code,
+        items: input.items,
+        total: input.total,
+        whatsapp_message: placeholderMessage,
+      };
+
   const { data, error } = await supabase
     .from("customer_orders")
-    .insert({
-      order_number: slots.order_number,
-      order_code: slots.order_code,
-      items: input.items,
-      total: input.total,
-      whatsapp_message: placeholderMessage,
-    })
+    .insert(insertPayload)
     .select("*")
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (!slots.legacySchema && isMissingColumnError(error, "order_code")) {
+      throw new Error(
+        "Falta la columna order_code en Supabase. Ejecutá la migración 014_customer_orders_production_catch_up.sql en el SQL Editor.",
+      );
+    }
+    throw new Error(error.message);
+  }
 
   const order = normalizeOrder(data as CustomerOrder);
   const whatsapp_message = buildWhatsAppOrderMessage(

@@ -99,12 +99,14 @@ export type CustomerOrderRow = {
   created_at: string;
 };
 
-export type CustomerOrderInsert = Omit<
-  CustomerOrderRow,
-  "id" | "created_at" | "status"
-> & {
-  id?: string;
+export type CustomerOrderInsert = {
+  order_number?: number;
+  order_code?: number;
+  items: Json;
+  total: number;
+  whatsapp_message: string;
   status?: CustomerOrderStatus;
+  id?: string;
   created_at?: string;
 };
 

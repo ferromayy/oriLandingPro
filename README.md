@@ -4,10 +4,18 @@ Landing y panel admin para [Orí Cafe](https://www.oricafe.com.ar/), con **Next.
 
 ## Qué incluye
 
-- **Landing pública** con la estética del sitio actual (promo bar, header, grilla de cafés, carrito WhatsApp)
-- **Páginas de producto** (`/producto/[slug]`)
-- **Panel superadmin** (`/admin`) para crear, editar y eliminar cafés
-- **Base de datos Supabase** con tabla `coffees` + storage para imágenes
+- **Landing pública** — promo bar, header, grilla de cafés, detalle de producto, carrito y checkout por WhatsApp
+- **Educación** — notas en `/educacion` (activable con flag)
+- **Panel superadmin** (`/admin`) — cafés, pedidos y educación
+- **Pedidos** — registro automático al checkout, códigos desde #1600, gestión en admin
+- **Supabase** — cafés, imágenes, variantes, notas de educación, pedidos
+
+## Documentación
+
+Toda la documentación detallada está en **[`docs/`](./docs/README.md)**:
+
+- [Implementaciones](./docs/implementaciones.md) — educación, cafés, carrito, pedidos, deploy
+- [Migraciones SQL](./docs/migraciones.md) — orden de migraciones y catch-up de producción
 
 ## Setup rápido
 
@@ -17,32 +25,33 @@ Landing y panel admin para [Orí Cafe](https://www.oricafe.com.ar/), con **Next.
 cp .env.local.example .env.local
 ```
 
-Completa en `.env.local`:
+Completa en `.env.local` (ver `.env.local.example` para la lista completa):
 
 | Variable | Uso |
 |----------|-----|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave publishable |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Requerida** para el admin (CRUD + uploads) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Requerida** para admin, pedidos y uploads |
 | `SUPERADMIN_EMAIL` / `SUPERADMIN_PASSWORD` / `SUPERADMIN_SESSION_SECRET` | Login del panel |
+| `NEXT_PUBLIC_SITE_URL` | URL pública (QR, links) |
 
 ### 2. Base de datos
 
-En Supabase → **SQL Editor**, ejecuta el archivo:
+En Supabase → **SQL Editor**, ejecutá las migraciones en orden. Ver la guía completa en [`docs/migraciones.md`](./docs/migraciones.md).
+
+Mínimo para desarrollo nuevo:
 
 ```
 supabase/migrations/001_coffees.sql
-```
-
-Eso crea la tabla `coffees`, políticas RLS, bucket `coffee-images` y **5 cafés de ejemplo** con las imágenes ya incluidas en `/public/images/products`.
-
-Luego ejecuta también:
-
-```
 supabase/migrations/002_coffee_images_and_variants.sql
+… (hasta la última que necesites)
 ```
 
-Eso agrega **galería de fotos** (3–6 por café, una principal) y **precios por tamaño** (150g, 250g, 500g).
+Para **producción** con pedidos, usá el catch-up:
+
+```
+supabase/migrations/014_customer_orders_production_catch_up.sql
+```
 
 ### 3. Arrancar
 
@@ -52,31 +61,16 @@ npm run dev
 ```
 
 - Landing: [http://localhost:3000](http://localhost:3000)
-- Admin login: [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
+- Admin: [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
 
-## Panel admin
-
-Rutas:
+## Panel admin (rutas)
 
 | Ruta | Descripción |
 |------|-------------|
 | `/admin` | Dashboard |
-| `/admin/coffees` | Listado de cafés |
-| `/admin/coffees/new` | Alta de café |
-| `/admin/coffees/[id]/edit` | Edición |
-
-Campos por café: nombre, slug, codename, notas de cata, descripción, **3–6 fotos** (una principal), **precios y stock por 150g / 250g / 500g**, visible, orden.
-
-Imágenes: subí un archivo (va a Supabase Storage) o pegá una URL / ruta local (`/images/products/...`).
-
-## Imágenes incluidas
-
-Ya descargadas del sitio original en:
-
-- `public/images/brand/logo.png`
-- `public/images/products/*.png`
-
-Si tenés versiones en mejor calidad (logo, fotos de producto, favicon), reemplazalas ahí o subilas desde el admin.
+| `/admin/coffees` | Cafés (galería, variantes 150g–1kg) |
+| `/admin/orders` | Pedidos del carrito |
+| `/admin/education` | Notas de educación + QR |
 
 ## Scripts
 
