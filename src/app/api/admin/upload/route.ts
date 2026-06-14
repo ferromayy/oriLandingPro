@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSuperAdminApi } from "@/lib/auth/api-guard";
 import { uploadCoffeeImageAdmin } from "@/lib/coffees/admin";
+import { isAllowedImageUpload } from "@/lib/uploads/image-types";
 
 export async function POST(request: Request) {
   const denied = await requireSuperAdminApi();
@@ -17,9 +18,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!file.type.startsWith("image/")) {
+    if (!isAllowedImageUpload(file)) {
       return NextResponse.json(
-        { ok: false, message: "Solo se permiten imágenes" },
+        { ok: false, message: "Solo se permiten imágenes (JPG, PNG, WebP, HEIC…)" },
         { status: 400 },
       );
     }

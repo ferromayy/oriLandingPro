@@ -33,6 +33,7 @@ async function syncImages(
       education_note_id: noteId,
       url: image.url.trim(),
       sort_order: image.sort_order ?? index,
+      is_primary: image.is_primary,
     })),
   );
 

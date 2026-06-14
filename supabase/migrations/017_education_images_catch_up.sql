@@ -31,4 +31,7 @@ alter table public.education_notes
 alter table public.education_notes
   add column if not exists nombre text not null default '';
 
+alter table public.education_note_images
+  add column if not exists is_primary boolean not null default false;
+
 notify pgrst, 'reload schema';

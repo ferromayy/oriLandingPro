@@ -16,6 +16,7 @@ import {
   type EducationNoteFormData,
   type EducationNoteImageForm,
 } from "@/lib/education/types";
+import { IMAGE_UPLOAD_ACCEPT } from "@/lib/uploads/image-types";
 import {
   validateEducationNoteForm,
   type FormValidationIssue,
@@ -79,14 +80,29 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
     });
   }
 
-  function removeImage(index: number) {
+  function setPrimaryImage(index: number) {
     clearIssues();
     setForm((prev) => ({
       ...prev,
-      images: prev.images
-        .filter((_, i) => i !== index)
-        .map((image, i) => ({ ...image, sort_order: i })),
+      images: prev.images.map((image, i) => ({
+        ...image,
+        is_primary: i === index,
+      })),
     }));
+  }
+
+  function removeImage(index: number) {
+    clearIssues();
+    setForm((prev) => {
+      const next = prev.images.filter((_, i) => i !== index);
+      if (next.length > 0 && !next.some((image) => image.is_primary)) {
+        next[0] = { ...next[0], is_primary: true };
+      }
+      return {
+        ...prev,
+        images: next.map((image, i) => ({ ...image, sort_order: i })),
+      };
+    });
   }
 
   function moveImage(index: number, direction: -1 | 1) {
@@ -109,13 +125,16 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
       const toAdd = newImages.slice(0, remaining);
       if (toAdd.length === 0) return prev;
 
-      return {
-        ...prev,
-        images: [...prev.images, ...toAdd].map((image, index) => ({
-          ...image,
-          sort_order: index,
-        })),
-      };
+      const merged = [...prev.images, ...toAdd].map((image, index) => ({
+        ...image,
+        sort_order: index,
+      }));
+
+      if (!merged.some((image) => image.is_primary) && merged.length > 0) {
+        merged[0] = { ...merged[0], is_primary: true };
+      }
+
+      return { ...prev, images: merged };
     });
   }
 
@@ -134,7 +153,13 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
     }
 
     clearIssues();
-    appendImages([{ url, sort_order: form.images.length }]);
+    appendImages([
+      {
+        url,
+        sort_order: form.images.length,
+        is_primary: form.images.length === 0,
+      },
+    ]);
     setImageUrlDraft("");
   }
 
@@ -168,6 +193,7 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
         uploaded.push({
           url: data.url,
           sort_order: form.images.length + uploaded.length,
+          is_primary: form.images.length === 0 && uploaded.length === 0,
         });
       }
 
@@ -318,8 +344,9 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
                   Imágenes (opcional)
                 </h2>
                 <p className="mt-1 text-xs text-zinc-500">
-                  Hasta {MAX_EDUCATION_NOTE_IMAGES} imágenes por nota. La primera es la
-                  portada en el listado.
+                  Hasta {MAX_EDUCATION_NOTE_IMAGES} imágenes. Marcá una como{" "}
+                  <strong>principal</strong> — aparece junto al título en el sitio.
+                  Acepta JPG, PNG, WebP y HEIC.
                 </p>
               </div>
               <span className="font-mono text-xs text-zinc-400">
@@ -330,7 +357,7 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept={IMAGE_UPLOAD_ACCEPT}
               multiple
               className="hidden"
               disabled={uploading || imageSlotsRemaining <= 0}
@@ -345,12 +372,16 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
                   return (
                     <div
                       key={`${image.url}-${slotIndex}`}
-                      className="rounded-lg border border-zinc-200 p-3"
+                      className={`rounded-lg border p-3 ${
+                        image.is_primary
+                          ? "border-zinc-900 ring-1 ring-zinc-900"
+                          : "border-zinc-200"
+                      }`}
                     >
                       <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
                         Imagen {slotIndex + 1}
-                        {slotIndex === 0 && (
-                          <span className="ml-1 normal-case text-zinc-500">· portada</span>
+                        {image.is_primary && (
+                          <span className="ml-1 normal-case text-zinc-600">· principal</span>
                         )}
                       </p>
                       <div className="relative mb-3 aspect-square w-full overflow-hidden rounded bg-zinc-100">
@@ -363,6 +394,17 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
                         />
                       </div>
                       <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPrimaryImage(slotIndex)}
+                          className={`rounded px-2 py-1 text-xs ${
+                            image.is_primary
+                              ? "bg-zinc-900 text-white"
+                              : "border border-zinc-300 hover:bg-zinc-50"
+                          }`}
+                        >
+                          {image.is_primary ? "★ Principal" : "Hacer principal"}
+                        </button>
                         <button
                           type="button"
                           onClick={() => moveImage(slotIndex, -1)}

@@ -1,5 +1,6 @@
 import { normalizeExtendedContentUrl } from "@/lib/coffees/extended-content";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { prepareImageUpload } from "@/lib/uploads/prepare-image";
 import { COFFEE_RELATIONS_SELECT } from "@/lib/coffees/select";
 import type { CoffeeFormData } from "@/lib/coffees/types";
 import type { Coffee } from "@/lib/coffees/types";
@@ -139,14 +140,13 @@ export async function deleteCoffeeAdmin(id: string) {
 
 export async function uploadCoffeeImageAdmin(file: File): Promise<string> {
   const supabase = createAdminClient();
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const path = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+  const prepared = await prepareImageUpload(file);
+  const path = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${prepared.extension}`;
 
-  const buffer = Buffer.from(await file.arrayBuffer());
   const { error } = await supabase.storage
     .from("coffee-images")
-    .upload(path, buffer, {
-      contentType: file.type || "image/jpeg",
+    .upload(path, prepared.buffer, {
+      contentType: prepared.contentType,
       upsert: false,
     });
 

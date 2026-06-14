@@ -1,3 +1,4 @@
+import { ensurePrimaryImageFlag } from "@/lib/education/helpers";
 import { slugify } from "@/lib/coffees/types";
 import type { EducationNoteImageRow, EducationNoteRow } from "@/types/database";
 
@@ -10,6 +11,7 @@ export type EducationNote = EducationNoteRow & {
 export type EducationNoteImageForm = {
   url: string;
   sort_order: number;
+  is_primary: boolean;
 };
 
 export type EducationNoteFormData = {
@@ -40,10 +42,13 @@ export function toEducationNoteFormData(note: EducationNote): EducationNoteFormD
     content: normalized.content,
     source: normalized.source ?? "",
     nombre: normalized.nombre ?? "",
-    images: normalized.education_note_images.map((image) => ({
-      url: image.url,
-      sort_order: image.sort_order,
-    })),
+    images: ensurePrimaryImageFlag(
+      normalized.education_note_images.map((image) => ({
+        url: image.url,
+        sort_order: image.sort_order,
+        is_primary: image.is_primary ?? false,
+      })),
+    ),
     is_active: normalized.is_active,
     sort_order: normalized.sort_order,
   };

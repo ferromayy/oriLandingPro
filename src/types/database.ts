@@ -85,6 +85,7 @@ export type EducationNoteImageRow = {
   education_note_id: string;
   url: string;
   sort_order: number;
+  is_primary: boolean;
   created_at: string;
 };
 

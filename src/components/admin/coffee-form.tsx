@@ -29,6 +29,7 @@ import {
   normalizeExtendedContentUrl,
 } from "@/lib/coffees/extended-content";
 import { getEducationNotePublicPath } from "@/lib/site/public-url";
+import { IMAGE_UPLOAD_ACCEPT } from "@/lib/uploads/image-types";
 
 export type EducationNoteOption = {
   id: string;
@@ -494,7 +495,7 @@ export function CoffeeForm({
 
           <input
             type="file"
-            accept="image/*"
+            accept={IMAGE_UPLOAD_ACCEPT}
             multiple
             disabled={uploading || form.images.length >= MAX_COFFEE_IMAGES}
             onChange={handleImageUpload}

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -6,6 +5,7 @@ import {
   getEducationExcerpt,
 } from "@/lib/education/content";
 import { getActiveEducationNotes } from "@/lib/education/queries";
+import { EducationNoteTitleWithImage } from "@/components/site/education-note-media";
 import { EDUCATION_PUBLIC_ENABLED } from "@/lib/site/features";
 
 export const dynamic = "force-dynamic";
@@ -35,28 +35,13 @@ export default async function EducacionPage() {
           {notes.map((note) => {
             const excerpt = getEducationExcerpt(note.content);
             const hasMore = educationNoteHasMore(note.content);
-            const coverImage = note.education_note_images[0];
 
             return (
               <article
                 key={note.id}
                 className="rounded-lg border border-gray-200 bg-white p-6"
               >
-                <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-900">
-                  {note.title}
-                </h2>
-
-                {coverImage && (
-                  <div className="relative mt-4 aspect-[16/9] overflow-hidden rounded-md bg-gray-100">
-                    <Image
-                      src={coverImage.url}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 672px"
-                    />
-                  </div>
-                )}
+                <EducationNoteTitleWithImage note={note} title={note.title} />
 
                 <p className="mt-3 text-sm leading-relaxed text-gray-600">
                   {excerpt}
