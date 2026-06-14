@@ -10,8 +10,8 @@ import {
   inputErrorClass,
   sectionErrorClass,
 } from "@/components/admin/form-notifications";
-import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { saveEducationNoteAction } from "@/lib/education/actions";
+import { uploadAdminImageAction } from "@/lib/uploads/actions";
 import {
   MAX_EDUCATION_NOTE_IMAGES,
   slugify,
@@ -189,13 +189,12 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
       for (const file of Array.from(files).slice(0, remaining)) {
         const body = new FormData();
         body.append("file", file);
-        const res = await fetch("/api/admin/upload", { method: "POST", body });
-        const data = await parseApiJsonResponse<{ ok: boolean; url?: string; message?: string }>(res);
-        if (!res.ok || !data.url) {
-          throw new Error(data.message ?? "Error al subir imagen");
+        const result = await uploadAdminImageAction(body);
+        if (!result.ok) {
+          throw new Error(result.message);
         }
         uploaded.push({
-          url: data.url,
+          url: result.url,
           sort_order: form.images.length + uploaded.length,
           is_primary: form.images.length === 0 && uploaded.length === 0,
         });
@@ -254,7 +253,12 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
       setIssues([
         {
           field: "form",
-          message: err instanceof Error ? err.message : "Error al guardar",
+          message:
+            err instanceof Error
+              ? err.message.includes("Server")
+                ? `Falló el guardado en el servidor: ${err.message}. Probá sin imágenes o recargá la página.`
+                : err.message
+              : "Error al guardar",
         },
       ]);
       setShowToast(true);

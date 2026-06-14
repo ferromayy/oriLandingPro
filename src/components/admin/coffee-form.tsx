@@ -29,6 +29,7 @@ import {
   normalizeExtendedContentUrl,
 } from "@/lib/coffees/extended-content";
 import { getEducationNotePublicPath } from "@/lib/site/public-url";
+import { uploadAdminImageAction } from "@/lib/uploads/actions";
 import { IMAGE_UPLOAD_ACCEPT } from "@/lib/uploads/image-types";
 
 export type EducationNoteOption = {
@@ -185,11 +186,12 @@ export function CoffeeForm({
       for (const file of Array.from(files)) {
         const body = new FormData();
         body.append("file", file);
-        const res = await fetch("/api/admin/upload", { method: "POST", body });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message ?? "Error al subir imagen");
+        const result = await uploadAdminImageAction(body);
+        if (!result.ok) {
+          throw new Error(result.message);
+        }
         uploaded.push({
-          url: data.url,
+          url: result.url,
           sort_order: form.images.length + uploaded.length,
           is_primary: form.images.length === 0 && uploaded.length === 0,
         });

@@ -1,4 +1,3 @@
-import sharp from "sharp";
 import { isHeicImage } from "@/lib/uploads/image-types";
 
 export type PreparedImageUpload = {
@@ -16,6 +15,7 @@ export async function prepareImageUpload(file: File): Promise<PreparedImageUploa
 
   if (isHeicImage(file)) {
     try {
+      const { default: sharp } = await import("sharp");
       const jpeg = await sharp(buffer).rotate().jpeg({ quality: 90 }).toBuffer();
       return {
         buffer: jpeg,
@@ -24,7 +24,7 @@ export async function prepareImageUpload(file: File): Promise<PreparedImageUploa
       };
     } catch {
       throw new Error(
-        "No se pudo convertir el archivo HEIC. Probá exportarlo como JPG desde Fotos.",
+        "No se pudo convertir el archivo HEIC. Exportalo como JPG desde Fotos e intentá de nuevo.",
       );
     }
   }
