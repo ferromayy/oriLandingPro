@@ -22,7 +22,7 @@ export default async function EducacionNotePage({ params }: Props) {
   if (!note) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-10">
+    <main className="mx-auto w-full max-w-[58rem] flex-1 px-4 py-12 sm:px-6 lg:px-8">
       <Link
         href="/educacion"
         className="mb-8 inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest text-gray-500 transition-colors hover:text-gray-900"
@@ -37,8 +37,6 @@ export default async function EducacionNotePage({ params }: Props) {
           titleAs="h1"
         />
 
-        <EducationNoteGallery note={note} />
-
         <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-gray-600 sm:text-base">
           {note.content}
         </div>
@@ -49,6 +47,8 @@ export default async function EducacionNotePage({ params }: Props) {
             {note.source?.trim() && <p>Fuente: {note.source.trim()}</p>}
           </div>
         )}
+
+        <EducationNoteGallery note={note} />
       </article>
     </main>
   );

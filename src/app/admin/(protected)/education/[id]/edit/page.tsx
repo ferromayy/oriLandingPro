@@ -21,7 +21,7 @@ export default async function EditEducationNotePage({ params, searchParams }: Pr
   const justCreated = created === "1";
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-[calc(42rem+4cm)] space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900">
           {justCreated ? "Nota creada" : "Editar nota"}

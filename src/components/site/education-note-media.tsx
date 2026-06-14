@@ -55,12 +55,12 @@ export function EducationNoteGallery({ note }: { note: EducationNote }) {
 
   return (
     <div
-      className={`mt-6 grid gap-3 ${
+      className={`mt-8 border-t border-gray-100 pt-8 grid gap-3 ${
         galleryImages.length === 1
           ? "grid-cols-1"
           : galleryImages.length === 2
             ? "grid-cols-1 sm:grid-cols-2"
-            : "grid-cols-1 sm:grid-cols-2"
+            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
       }`}
     >
       {galleryImages.map((image) => (

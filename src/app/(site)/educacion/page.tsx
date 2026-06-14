@@ -16,7 +16,7 @@ export default async function EducacionPage() {
   const notes = await getActiveEducationNotes();
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-10">
+    <main className="mx-auto w-full max-w-[58rem] flex-1 px-4 py-12 sm:px-6 lg:px-8">
       <section className="mb-12 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
           Educación
