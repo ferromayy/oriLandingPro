@@ -71,9 +71,11 @@ export type EducationNoteRow = {
 
 export type EducationNoteInsert = Omit<
   EducationNoteRow,
-  "id" | "created_at" | "updated_at"
+  "id" | "created_at" | "updated_at" | "source" | "nombre"
 > & {
   id?: string;
+  source?: string;
+  nombre?: string;
   created_at?: string;
   updated_at?: string;
 };
@@ -147,8 +149,9 @@ export type Database = {
       };
       education_note_images: {
         Row: EducationNoteImageRow;
-        Insert: Omit<EducationNoteImageRow, "id" | "created_at"> & {
+        Insert: Omit<EducationNoteImageRow, "id" | "created_at" | "is_primary"> & {
           id?: string;
+          is_primary?: boolean;
           created_at?: string;
         };
         Update: Partial<EducationNoteImageRow>;

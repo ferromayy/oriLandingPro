@@ -8,53 +8,58 @@ import {
 import { educationNoteFormSchema } from "@/lib/education/schema";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function jsonError(message: string, status = 500) {
+  return NextResponse.json({ ok: false, message }, { status });
+}
 
 export async function GET() {
-  const denied = await requireSuperAdminApi();
-  if (denied) return denied;
-
   try {
+    const denied = await requireSuperAdminApi();
+    if (denied) return denied;
+
     const notes = await getAllEducationNotesAdmin();
     return NextResponse.json({ ok: true, notes });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Error al listar notas";
-    return NextResponse.json({ ok: false, message }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Error al listar notas";
+    return jsonError(message);
   }
 }
 
 export async function POST(request: Request) {
-  const denied = await requireSuperAdminApi();
-  if (denied) return denied;
-
-  let body: unknown;
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ ok: false, message: "JSON inválido" }, { status: 400 });
-  }
+    const denied = await requireSuperAdminApi();
+    if (denied) return denied;
 
-  const parsed = educationNoteFormSchema.safeParse(body);
-  if (!parsed.success) {
-    const errors = parsed.error.issues.map((issue) => issue.message);
-    return NextResponse.json(
-      {
-        ok: false,
-        message: errors[0] ?? "Datos inválidos",
-        errors,
-      },
-      { status: 400 },
-    );
-  }
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return jsonError("JSON inválido", 400);
+    }
 
-  try {
+    const parsed = educationNoteFormSchema.safeParse(body);
+    if (!parsed.success) {
+      const errors = parsed.error.issues.map((issue) => issue.message);
+      return NextResponse.json(
+        {
+          ok: false,
+          message: errors[0] ?? "Datos inválidos",
+          errors,
+        },
+        { status: 400 },
+      );
+    }
+
     const note = await createEducationNoteAdmin({
       ...parsed.data,
       images: ensurePrimaryImageFlag(parsed.data.images),
     });
+
     return NextResponse.json({ ok: true, note }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al crear nota";
-    return NextResponse.json({ ok: false, message }, { status: 500 });
+    return jsonError(message);
   }
 }

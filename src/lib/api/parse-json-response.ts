@@ -12,8 +12,15 @@ export async function parseApiJsonResponse<T extends ApiJsonBody>(
 
   if (contentType.includes("application/json") || text.trimStart().startsWith("{")) {
     try {
-      return JSON.parse(text) as T;
-    } catch {
+      const data = JSON.parse(text) as T;
+      if (!res.ok && data.message) {
+        throw new Error(data.message);
+      }
+      return data;
+    } catch (err) {
+      if (err instanceof Error && err.message !== "Respuesta JSON inválida del servidor") {
+        throw err;
+      }
       throw new Error("Respuesta JSON inválida del servidor");
     }
   }
@@ -32,7 +39,7 @@ export async function parseApiJsonResponse<T extends ApiJsonBody>(
     }
 
     throw new Error(
-      `Error del servidor (${res.status}). Revisá migraciones SQL en Supabase (015–018) y los logs en Vercel.`,
+      `Error del servidor (${res.status}). Si persiste, revisá migraciones 017–018 en Supabase y redeploy en Vercel.`,
     );
   }
 
