@@ -5,7 +5,10 @@ import {
   getEducationNoteByIdAdmin,
   updateEducationNoteAdmin,
 } from "@/lib/education/admin";
+import { ensurePrimaryImageFlag } from "@/lib/education/helpers";
 import { educationNoteFormSchema } from "@/lib/education/schema";
+
+export const runtime = "nodejs";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -57,7 +60,10 @@ export async function PUT(request: Request, { params }: Params) {
   }
 
   try {
-    const note = await updateEducationNoteAdmin(id, parsed.data);
+    const note = await updateEducationNoteAdmin(id, {
+      ...parsed.data,
+      images: ensurePrimaryImageFlag(parsed.data.images),
+    });
     return NextResponse.json({ ok: true, note });
   } catch (err) {
     const message =

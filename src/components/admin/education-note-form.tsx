@@ -10,6 +10,7 @@ import {
   inputErrorClass,
   sectionErrorClass,
 } from "@/components/admin/form-notifications";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import {
   MAX_EDUCATION_NOTE_IMAGES,
   slugify,
@@ -188,8 +189,10 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
         const body = new FormData();
         body.append("file", file);
         const res = await fetch("/api/admin/upload", { method: "POST", body });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message ?? "Error al subir imagen");
+        const data = await parseApiJsonResponse<{ ok: boolean; url?: string; message?: string }>(res);
+        if (!res.ok || !data.url) {
+          throw new Error(data.message ?? "Error al subir imagen");
+        }
         uploaded.push({
           url: data.url,
           sort_order: form.images.length + uploaded.length,
@@ -237,15 +240,20 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validation.data),
       });
-      const data = await res.json();
+      const data = await parseApiJsonResponse<{
+        ok: boolean;
+        note?: { id: string };
+        message?: string;
+        errors?: string[];
+      }>(res);
 
       if (!res.ok) {
-        const apiIssues: FormValidationIssue[] = (data.errors ?? [data.message]).map(
-          (message: string, index: number) => ({
-            field: index === 0 ? "form" : `form-${index}`,
-            message,
-          }),
-        );
+        const apiIssues: FormValidationIssue[] = (
+          data.errors ?? [data.message ?? "Error al guardar"]
+        ).map((message: string, index: number) => ({
+          field: index === 0 ? "form" : `form-${index}`,
+          message,
+        }));
         setIssues(apiIssues);
         setShowToast(true);
         return;

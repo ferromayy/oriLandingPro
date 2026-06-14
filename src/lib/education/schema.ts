@@ -4,7 +4,7 @@ import { MAX_EDUCATION_NOTE_IMAGES } from "@/lib/education/types";
 const educationNoteImageSchema = z.object({
   url: z.string().trim().min(1, "URL de imagen inválida"),
   sort_order: z.number().int().min(0),
-  is_primary: z.boolean(),
+  is_primary: z.boolean().optional().default(false),
 });
 
 export const educationNoteFormSchema = z.object({

@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { requireSuperAdminApi } from "@/lib/auth/api-guard";
+import { ensurePrimaryImageFlag } from "@/lib/education/helpers";
 import {
   createEducationNoteAdmin,
   getAllEducationNotesAdmin,
 } from "@/lib/education/admin";
 import { educationNoteFormSchema } from "@/lib/education/schema";
+
+export const runtime = "nodejs";
 
 export async function GET() {
   const denied = await requireSuperAdminApi();
@@ -45,7 +48,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const note = await createEducationNoteAdmin(parsed.data);
+    const note = await createEducationNoteAdmin({
+      ...parsed.data,
+      images: ensurePrimaryImageFlag(parsed.data.images),
+    });
     return NextResponse.json({ ok: true, note }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al crear nota";

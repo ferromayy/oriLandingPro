@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ensurePrimaryImageFlag } from "@/lib/education/helpers";
 import { EDUCATION_NOTE_SELECT } from "@/lib/education/select";
 import type {
   EducationNote,
@@ -24,12 +25,14 @@ async function syncImages(
   noteId: string,
   images: EducationNoteFormData["images"],
 ) {
+  const normalized = ensurePrimaryImageFlag(images);
+
   await supabase.from("education_note_images").delete().eq("education_note_id", noteId);
 
-  if (images.length === 0) return;
+  if (normalized.length === 0) return;
 
   const { error } = await supabase.from("education_note_images").insert(
-    images.map((image, index) => ({
+    normalized.map((image, index) => ({
       education_note_id: noteId,
       url: image.url.trim(),
       sort_order: image.sort_order ?? index,
