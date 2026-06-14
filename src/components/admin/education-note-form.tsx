@@ -11,6 +11,7 @@ import {
   sectionErrorClass,
 } from "@/components/admin/form-notifications";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { saveEducationNoteAction } from "@/lib/education/actions";
 import {
   MAX_EDUCATION_NOTE_IMAGES,
   slugify,
@@ -229,38 +230,22 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
 
     setLoading(true);
     try {
-      const url =
-        mode === "create"
-          ? "/api/admin/education"
-          : `/api/admin/education/${noteId}`;
-      const method = mode === "create" ? "POST" : "PUT";
+      const result = await saveEducationNoteAction(mode, noteId, validation.data);
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validation.data),
-      });
-      const data = await parseApiJsonResponse<{
-        ok: boolean;
-        note?: { id: string };
-        message?: string;
-        errors?: string[];
-      }>(res);
-
-      if (!res.ok) {
+      if (!result.ok) {
         const apiIssues: FormValidationIssue[] = (
-          data.errors ?? [data.message ?? "Error al guardar"]
-        ).map((message: string, index: number) => ({
-          field: index === 0 ? "form" : `form-${index}`,
-          message,
+          result.issues ?? [{ field: "form", message: result.message }]
+        ).map((issue, index) => ({
+          field: issue.field || (index === 0 ? "form" : `form-${index}`),
+          message: issue.message,
         }));
         setIssues(apiIssues);
         setShowToast(true);
         return;
       }
 
-      if (mode === "create" && data.note?.id) {
-        router.push(`/admin/education/${data.note.id}/edit?created=1`);
+      if (mode === "create") {
+        router.push(`/admin/education/${result.noteId}/edit?created=1`);
       } else {
         router.push("/admin/education");
       }
