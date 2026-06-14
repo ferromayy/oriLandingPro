@@ -17,6 +17,8 @@ export const educationNoteFormSchema = z.object({
       "El slug solo puede tener minúsculas, números y guiones",
     ),
   content: z.string().trim().min(1, "El contenido es obligatorio"),
+  source: z.string().trim().max(500, "La fuente es demasiado larga").default(""),
+  nombre: z.string().trim().max(200, "El nombre es demasiado largo").default(""),
   images: z
     .array(educationNoteImageSchema)
     .max(

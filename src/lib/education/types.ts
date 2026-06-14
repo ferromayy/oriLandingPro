@@ -16,6 +16,8 @@ export type EducationNoteFormData = {
   title: string;
   slug: string;
   content: string;
+  source: string;
+  nombre: string;
   images: EducationNoteImageForm[];
   is_active: boolean;
   sort_order: number;
@@ -36,6 +38,8 @@ export function toEducationNoteFormData(note: EducationNote): EducationNoteFormD
     title: normalized.title,
     slug: normalized.slug ?? "",
     content: normalized.content,
+    source: normalized.source ?? "",
+    nombre: normalized.nombre ?? "",
     images: normalized.education_note_images.map((image) => ({
       url: image.url,
       sort_order: image.sort_order,

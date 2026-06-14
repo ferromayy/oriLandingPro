@@ -62,6 +62,13 @@ export default async function EducacionNotePage({ params }: Props) {
         <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-gray-600 sm:text-base">
           {note.content}
         </div>
+
+        {(note.nombre?.trim() || note.source?.trim()) && (
+          <div className="mt-8 space-y-1 border-t border-gray-100 pt-4 text-xs text-gray-400">
+            {note.nombre?.trim() && <p>Nombre: {note.nombre.trim()}</p>}
+            {note.source?.trim() && <p>Fuente: {note.source.trim()}</p>}
+          </div>
+        )}
       </article>
     </main>
   );

@@ -12,6 +12,8 @@ function toPayload(data: EducationNoteFormData): EducationNoteInsert {
     title: data.title.trim(),
     slug: data.slug.trim(),
     content: data.content.trim(),
+    source: data.source.trim(),
+    nombre: data.nombre.trim(),
     is_active: data.is_active,
     sort_order: data.sort_order,
   };

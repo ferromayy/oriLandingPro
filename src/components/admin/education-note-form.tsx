@@ -25,6 +25,8 @@ const emptyForm: EducationNoteFormData = {
   title: "",
   slug: "",
   content: "",
+  source: "",
+  nombre: "",
   images: [],
   is_active: true,
   sort_order: 0,
@@ -373,6 +375,44 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
                 />
                 Publicada en el sitio
               </label>
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-zinc-100 pt-4">
+            <div>
+              <label htmlFor="education-nombre" className="text-xs text-zinc-400">
+                Nombre <span className="text-zinc-300">(opcional)</span>
+              </label>
+              <input
+                id="education-nombre"
+                type="text"
+                value={form.nombre}
+                onChange={(e) => updateField("nombre", e.target.value)}
+                className={`mt-1 w-full border-0 border-b bg-transparent px-0 py-1 text-xs text-zinc-500 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none focus:ring-0 ${
+                  fieldHasError(issues, "nombre")
+                    ? "border-red-300"
+                    : "border-zinc-200"
+                }`}
+                placeholder="Ej. autor o referencia"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="education-source" className="text-xs text-zinc-400">
+                Fuente <span className="text-zinc-300">(opcional)</span>
+              </label>
+              <input
+                id="education-source"
+                type="text"
+                value={form.source}
+                onChange={(e) => updateField("source", e.target.value)}
+                className={`mt-1 w-full border-0 border-b bg-transparent px-0 py-1 text-xs text-zinc-500 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none focus:ring-0 ${
+                  fieldHasError(issues, "source")
+                    ? "border-red-300"
+                    : "border-zinc-200"
+                }`}
+                placeholder="Ej. libro, artículo o referencia"
+              />
             </div>
           </div>
         </div>
