@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { CreateOrderInput } from "@/lib/orders/schema";
+import type { CreateOrderInput, UpdateOrderItemsInput } from "@/lib/orders/schema";
 import type { CustomerOrder, OrderStatus } from "@/lib/orders/types";
 import type { CustomerOrderInsert } from "@/types/database";
 import { legacyOrderCodeFromNumber, ORDER_CODE_START } from "@/lib/orders/types";
@@ -146,6 +146,50 @@ export async function updateCustomerOrderStatusAdmin(
   const { data, error } = await supabase
     .from("customer_orders")
     .update({ status })
+    .eq("id", orderId)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return normalizeOrder(data as CustomerOrder);
+}
+
+export async function updateCustomerOrderItemsAdmin(
+  orderId: string,
+  input: UpdateOrderItemsInput,
+): Promise<CustomerOrder> {
+  const supabase = createAdminClient();
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("customer_orders")
+    .select("*")
+    .eq("id", orderId)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const order = normalizeOrder(existing as CustomerOrder);
+  const whatsappItems = input.items.map((item) => ({
+    codename: item.codename ?? null,
+    name: item.name,
+    sizeGrams: item.size_grams,
+    grind: item.grind,
+    quantity: item.quantity,
+    price: item.unit_price,
+  }));
+  const whatsapp_message = buildWhatsAppOrderMessage(
+    whatsappItems,
+    input.total,
+    order.order_code,
+  );
+
+  const { data, error } = await supabase
+    .from("customer_orders")
+    .update({
+      items: input.items,
+      total: input.total,
+      whatsapp_message,
+    })
     .eq("id", orderId)
     .select("*")
     .single();

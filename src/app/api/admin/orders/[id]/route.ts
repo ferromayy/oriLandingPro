@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { requireSuperAdminApi } from "@/lib/auth/api-guard";
 import {
   deleteCustomerOrderAdmin,
+  updateCustomerOrderItemsAdmin,
   updateCustomerOrderStatusAdmin,
 } from "@/lib/orders/admin";
-import { updateOrderStatusSchema } from "@/lib/orders/schema";
+import { updateOrderSchema } from "@/lib/orders/schema";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -21,7 +22,7 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ ok: false, message: "JSON inválido" }, { status: 400 });
   }
 
-  const parsed = updateOrderStatusSchema.safeParse(body);
+  const parsed = updateOrderSchema.safeParse(body);
   if (!parsed.success) {
     const errors = parsed.error.issues.map((issue) => issue.message);
     return NextResponse.json(
@@ -31,7 +32,12 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   try {
-    const order = await updateCustomerOrderStatusAdmin(id, parsed.data.status);
+    if ("status" in parsed.data) {
+      const order = await updateCustomerOrderStatusAdmin(id, parsed.data.status);
+      return NextResponse.json({ ok: true, order });
+    }
+
+    const order = await updateCustomerOrderItemsAdmin(id, parsed.data);
     return NextResponse.json({ ok: true, order });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al actualizar pedido";

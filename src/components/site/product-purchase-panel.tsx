@@ -11,6 +11,7 @@ import {
 import { GRIND_OPTIONS, type GrindOption } from "@/lib/coffees/product-content";
 import { getPrimaryImage, getVariant, isCoffeeSoldOut } from "@/lib/coffees/helpers";
 import { useCart } from "@/components/site/cart-context";
+import { ProductTechAndTasting } from "@/components/site/product-tech-tasting";
 
 export function ProductPurchasePanel({ coffee }: { coffee: Coffee }) {
   const { addItem } = useCart();
@@ -69,6 +70,8 @@ export function ProductPurchasePanel({ coffee }: { coffee: Coffee }) {
           </div>
         )}
       </div>
+
+      <ProductTechAndTasting coffee={coffee} />
 
       <div className="border-t border-gray-200 font-mono text-sm">
         <div className="flex flex-col gap-2 border-b border-gray-200 py-4">

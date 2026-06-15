@@ -1,5 +1,7 @@
 import { OrderActions } from "@/components/admin/order-actions";
+import { OrderItemsEditor } from "@/components/admin/order-items-editor";
 import { formatArsPrice } from "@/lib/coffees/types";
+import { getAllCoffeesAdmin } from "@/lib/coffees/admin";
 import { getAllCustomerOrdersAdmin } from "@/lib/orders/admin";
 import {
   formatOrderDate,
@@ -10,10 +12,14 @@ import {
 
 export default async function AdminOrdersPage() {
   let orders: Awaited<ReturnType<typeof getAllCustomerOrdersAdmin>> = [];
+  let coffees: Awaited<ReturnType<typeof getAllCoffeesAdmin>> = [];
   let error: string | null = null;
 
   try {
-    orders = await getAllCustomerOrdersAdmin();
+    [orders, coffees] = await Promise.all([
+      getAllCustomerOrdersAdmin(),
+      getAllCoffeesAdmin(),
+    ]);
   } catch (err) {
     error = err instanceof Error ? err.message : "Error al cargar pedidos";
   }
@@ -81,12 +87,19 @@ export default async function AdminOrdersPage() {
                     {formatArsPrice(order.total)}
                   </td>
                   <td className="px-4 py-3">
-                    <OrderActions
-                      orderId={order.id}
-                      orderCode={getOrderCode(order)}
-                      orderNumber={getOrderNumber(order)}
-                      status={order.status}
-                    />
+                    <div className="space-y-2">
+                      <OrderItemsEditor
+                        order={order}
+                        orderCode={getOrderCode(order)}
+                        coffees={coffees}
+                      />
+                      <OrderActions
+                        orderId={order.id}
+                        orderCode={getOrderCode(order)}
+                        orderNumber={getOrderNumber(order)}
+                        status={order.status}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

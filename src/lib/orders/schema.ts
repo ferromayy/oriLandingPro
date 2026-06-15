@@ -19,36 +19,57 @@ const orderItemSchema = z.object({
   line_total: z.coerce.number().int().min(0),
 });
 
+function validateOrderItemsTotal(
+  data: { items: z.infer<typeof orderItemSchema>[]; total: number },
+  ctx: z.RefinementCtx,
+) {
+  const computedTotal = data.items.reduce((sum, item) => sum + item.line_total, 0);
+  if (computedTotal !== data.total) {
+    ctx.addIssue({
+      code: "custom",
+      message: "El total del pedido no coincide",
+      path: ["total"],
+    });
+  }
+
+  for (const [index, item] of data.items.entries()) {
+    if (item.unit_price * item.quantity !== item.line_total) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Precio de línea inválido",
+        path: ["items", index, "line_total"],
+      });
+    }
+  }
+}
+
 export const createOrderSchema = z
   .object({
     items: z.array(orderItemSchema).min(1, "El pedido no tiene productos"),
     total: z.coerce.number().int().min(0),
   })
-  .superRefine((data, ctx) => {
-    const computedTotal = data.items.reduce((sum, item) => sum + item.line_total, 0);
-    if (computedTotal !== data.total) {
-      ctx.addIssue({
-        code: "custom",
-        message: "El total del pedido no coincide",
-        path: ["total"],
-      });
-    }
-
-    for (const [index, item] of data.items.entries()) {
-      if (item.unit_price * item.quantity !== item.line_total) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Precio de línea inválido",
-          path: ["items", index, "line_total"],
-        });
-      }
-    }
-  });
+  .superRefine(validateOrderItemsTotal);
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
+
+export const updateOrderItemsSchema = z
+  .object({
+    items: z.array(orderItemSchema).min(1, "El pedido debe tener al menos un producto"),
+    total: z.coerce.number().int().min(0),
+  })
+  .superRefine(validateOrderItemsTotal);
+
+export type UpdateOrderItemsInput = z.infer<typeof updateOrderItemsSchema>;
 
 export const updateOrderStatusSchema = z.object({
   status: z.enum(["completed", "cancelled"]),
 });
 
 export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;
+
+export const updateOrderSchema = z.union([
+  updateOrderStatusSchema,
+  updateOrderItemsSchema,
+]);
+
+export type UpdateOrderInput = z.infer<typeof updateOrderSchema>;

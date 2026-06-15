@@ -16,18 +16,28 @@ function formatProductTitle(item: CustomerOrderItem): string {
   return `${item.codename.trim()} - ${tail}`;
 }
 
+export function formatOrderProductTitle(item: CustomerOrderItem): string {
+  return formatProductTitle(item);
+}
+
 function formatGrind(grind: string): string {
   if (grind === "Café en grano") return "Sin molienda";
   return grind;
 }
 
-export function formatOrderItemLine(item: CustomerOrderItem, index: number): string {
+export function formatOrderItemDetails(item: CustomerOrderItem): string {
   return [
-    `${index + 1}. ${formatProductTitle(item)}`,
     `Tamaño: ${formatOrderSize(item.size_grams)}`,
     `Molienda: ${formatGrind(item.grind)}`,
     `Cantidad: ${item.quantity}`,
     `Precio: ${formatArsPrice(item.line_total)}`,
+  ].join(" · ");
+}
+
+export function formatOrderItemLine(item: CustomerOrderItem, index: number): string {
+  return [
+    `${index + 1}. ${formatProductTitle(item)}`,
+    formatOrderItemDetails(item),
   ].join(" · ");
 }
 
