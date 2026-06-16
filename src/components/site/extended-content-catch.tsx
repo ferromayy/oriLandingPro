@@ -1,12 +1,18 @@
 import Link from "next/link";
-import { isInternalExtendedContentHref } from "@/lib/coffees/extended-content";
+import {
+  DEFAULT_EXTENDED_CATCH_BODY,
+  getDefaultExtendedCatchHeading,
+  isInternalExtendedContentHref,
+} from "@/lib/coffees/extended-content";
 
 type Props = {
   url: string;
   productName: string;
+  customCatchText?: string | null;
 };
 
-export function ExtendedContentCatch({ url, productName }: Props) {
+export function ExtendedContentCatch({ url, productName, customCatchText }: Props) {
+  const body = customCatchText?.trim() || DEFAULT_EXTENDED_CATCH_BODY;
   const ctaClassName =
     "mt-6 inline-flex h-11 items-center gap-2 bg-gray-900 px-8 text-sm font-bold uppercase tracking-wider text-white shadow-md transition-colors hover:bg-black hover:shadow-lg";
 
@@ -16,11 +22,10 @@ export function ExtendedContentCatch({ url, productName }: Props) {
         Seguí leyendo
       </p>
       <h3 className="mt-3 text-xl font-medium tracking-tight text-gray-900 md:text-2xl">
-        Conocé más sobre {productName}
+        {getDefaultExtendedCatchHeading(productName)}
       </h3>
       <p className="mt-3 max-w-xl text-sm font-light leading-relaxed text-gray-600">
-        Este es solo un adelanto. La historia completa, el origen y todos los
-        detalles están en nuestra nota de Educación.
+        {body}
       </p>
       {isInternalExtendedContentHref(url) ? (
         <Link href={url} className={ctaClassName}>

@@ -25,7 +25,11 @@ import {
   sectionErrorClass,
 } from "@/components/admin/form-notifications";
 import {
+  countWords,
+  DEFAULT_EXTENDED_CATCH_BODY,
   extractEducationSlugFromUrl,
+  getDefaultExtendedCatchHeading,
+  MAX_EXTENDED_CATCH_WORDS,
   normalizeExtendedContentUrl,
 } from "@/lib/coffees/extended-content";
 import { getEducationNotePublicPath } from "@/lib/site/public-url";
@@ -46,6 +50,7 @@ const emptyForm: CoffeeFormData = {
   short_description: "",
   long_description: "",
   extended_content_url: "",
+  extended_content_catch_text: "",
   origin: "",
   varietal: "",
   beneficio: "",
@@ -68,6 +73,8 @@ type Props = {
   initialData?: CoffeeFormData;
   educationNotes?: EducationNoteOption[];
 };
+
+type CatchTextMode = "default" | "custom";
 
 export function CoffeeForm({
   mode,
@@ -92,6 +99,9 @@ export function CoffeeForm({
   const [uploading, setUploading] = useState(false);
   const [issues, setIssues] = useState<FormValidationIssue[]>([]);
   const [showToast, setShowToast] = useState(false);
+  const [catchTextMode, setCatchTextMode] = useState<CatchTextMode>(() =>
+    initialData?.extended_content_catch_text?.trim() ? "custom" : "default",
+  );
 
   const dismissToast = useCallback(() => setShowToast(false), []);
 
@@ -238,7 +248,23 @@ export function CoffeeForm({
     e.preventDefault();
     clearIssues();
 
-    const validationIssues = validateCoffeeForm(form);
+    const clientIssues: FormValidationIssue[] = [];
+    if (
+      linkedEducationSlug &&
+      catchTextMode === "custom" &&
+      !form.extended_content_catch_text.trim()
+    ) {
+      clientIssues.push({
+        field: "extended_content_catch_text",
+        message: "Escribí el texto personalizado o elegí el texto predefinido",
+        section: "general",
+      });
+    }
+
+    const validationIssues = [
+      ...clientIssues,
+      ...validateCoffeeForm(form),
+    ];
     if (validationIssues.length > 0) {
       showValidationErrors(validationIssues);
       return;
@@ -294,6 +320,27 @@ export function CoffeeForm({
   const imagesMissing = form.images.length < MIN_COFFEE_IMAGES;
   const linkedEducationSlug =
     extractEducationSlugFromUrl(form.extended_content_url ?? "") ?? "";
+  const catchWordCount = countWords(form.extended_content_catch_text);
+  const catchWordsOverLimit = catchWordCount > MAX_EXTENDED_CATCH_WORDS;
+
+  function setCatchMode(mode: CatchTextMode) {
+    setCatchTextMode(mode);
+    if (mode === "default") {
+      updateField("extended_content_catch_text", "");
+    }
+  }
+
+  function handleEducationLinkChange(slug: string) {
+    clearIssues();
+    setForm((prev) => ({
+      ...prev,
+      extended_content_url: slug ? getEducationNotePublicPath(slug) : "",
+      extended_content_catch_text: slug ? prev.extended_content_catch_text : "",
+    }));
+    if (!slug) {
+      setCatchTextMode("default");
+    }
+  }
 
   return (
     <>
@@ -374,16 +421,14 @@ export function CoffeeForm({
 
           <Field
             label="Nota de educación vinculada"
-            error={fieldHasError(issues, "extended_content_url")}
+            error={
+              fieldHasError(issues, "extended_content_url") ||
+              fieldHasError(issues, "extended_content_catch_text")
+            }
           >
             <select
               value={linkedEducationSlug}
-              onChange={(e) =>
-                updateField(
-                  "extended_content_url",
-                  e.target.value ? getEducationNotePublicPath(e.target.value) : "",
-                )
-              }
+              onChange={(e) => handleEducationLinkChange(e.target.value)}
               className={inputClass(fieldHasError(issues, "extended_content_url"))}
             >
               <option value="">Sin nota vinculada</option>
@@ -402,6 +447,79 @@ export function CoffeeForm({
               <p className="mt-1 font-mono text-xs text-zinc-500">
                 {getEducationNotePublicPath(linkedEducationSlug)}
               </p>
+            )}
+            {linkedEducationSlug && (
+              <div className="mt-4 space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                  Texto del bloque &quot;Seguí leyendo&quot;
+                </p>
+
+                <div className="space-y-2">
+                  <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-800">
+                    <input
+                      type="radio"
+                      name="catch-text-mode"
+                      checked={catchTextMode === "default"}
+                      onChange={() => setCatchMode("default")}
+                      className="mt-1"
+                    />
+                    <span>Texto predefinido</span>
+                  </label>
+
+                  {catchTextMode === "default" && (
+                    <div className="ml-6 rounded-md border border-zinc-200 bg-white p-3 text-sm text-zinc-600">
+                      <p className="font-medium text-zinc-900">
+                        {getDefaultExtendedCatchHeading(form.name.trim() || "…")}
+                      </p>
+                      <p className="mt-2 font-light leading-relaxed">
+                        {DEFAULT_EXTENDED_CATCH_BODY}
+                      </p>
+                    </div>
+                  )}
+
+                  <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-800">
+                    <input
+                      type="radio"
+                      name="catch-text-mode"
+                      checked={catchTextMode === "custom"}
+                      onChange={() => setCatchMode("custom")}
+                      className="mt-1"
+                    />
+                    <span>Texto personalizado</span>
+                  </label>
+
+                  {catchTextMode === "custom" && (
+                    <div className="ml-6 space-y-2">
+                      <textarea
+                        rows={3}
+                        value={form.extended_content_catch_text}
+                        onChange={(e) =>
+                          updateField("extended_content_catch_text", e.target.value)
+                        }
+                        className={inputClass(
+                          fieldHasError(issues, "extended_content_catch_text") ||
+                            catchWordsOverLimit,
+                        )}
+                        placeholder="Escribí un adelanto breve para invitar a leer la nota…"
+                      />
+                      <p
+                        className={`text-xs ${
+                          catchWordsOverLimit ? "text-red-600" : "text-zinc-500"
+                        }`}
+                      >
+                        {catchWordCount}/{MAX_EXTENDED_CATCH_WORDS} palabras
+                        {catchWordsOverLimit &&
+                          ` — máximo ${MAX_EXTENDED_CATCH_WORDS} palabras`}
+                      </p>
+                      <p className="text-xs text-zinc-500">
+                        El título &quot;Conocé más sobre {form.name.trim() || "…"}
+                        &quot; se mantiene. Este texto reemplaza solo el párrafo
+                        descriptivo.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
             {educationNotes.length === 0 && (
               <p className="mt-1 text-xs text-zinc-500">

@@ -1,4 +1,4 @@
-import { isValidExtendedContentUrl } from "@/lib/coffees/extended-content";
+import { isValidExtendedContentUrl, countWords, MAX_EXTENDED_CATCH_WORDS } from "@/lib/coffees/extended-content";
 import { z } from "zod";
 import {
   COFFEE_SIZES_GRAMS,
@@ -46,6 +46,7 @@ export const coffeeFormSchema = z
         message:
           "La URL debe apuntar a una nota de Educación (ej. /educacion/metodos-de-filtrado)",
       }),
+    extended_content_catch_text: z.string().optional().default(""),
     origin: z.string().optional().default(""),
     varietal: z.string().optional().default(""),
     beneficio: z.string().optional().default(""),
@@ -85,6 +86,18 @@ export const coffeeFormSchema = z
         });
       }
     }
+
+    const catchText = data.extended_content_catch_text.trim();
+    if (data.extended_content_url.trim() && catchText) {
+      const words = countWords(catchText);
+      if (words > MAX_EXTENDED_CATCH_WORDS) {
+        ctx.addIssue({
+          code: "custom",
+          message: `El texto personalizado no puede superar ${MAX_EXTENDED_CATCH_WORDS} palabras`,
+          path: ["extended_content_catch_text"],
+        });
+      }
+    }
   });
 
 export type CoffeeFormInput = z.infer<typeof coffeeFormSchema>;
@@ -105,6 +118,7 @@ const FIELD_SECTION: Record<string, FormSection> = {
   short_description: "general",
   long_description: "general",
   extended_content_url: "general",
+  extended_content_catch_text: "general",
   sort_order: "general",
   images: "images",
   variants: "variants",

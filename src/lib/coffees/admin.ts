@@ -15,6 +15,10 @@ function toCoffeePayload(data: CoffeeFormData): CoffeeInsert {
     short_description: data.short_description.trim(),
     long_description: "",
     extended_content_url: normalizeExtendedContentUrl(data.extended_content_url ?? ""),
+    extended_content_catch_text:
+      data.extended_content_url.trim() && data.extended_content_catch_text.trim()
+        ? data.extended_content_catch_text.trim()
+        : "",
     origin: data.origin.trim(),
     varietal: data.varietal.trim(),
     beneficio: data.beneficio.trim(),

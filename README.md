@@ -5,10 +5,10 @@ Landing y panel admin para [Orí Cafe](https://www.oricafe.com.ar/), con **Next.
 ## Qué incluye
 
 - **Landing pública** — promo bar, header, grilla de cafés, detalle de producto, carrito y checkout por WhatsApp
-- **Educación** — notas en `/educacion` (activable con flag)
-- **Panel superadmin** (`/admin`) — cafés, pedidos y educación
+- **Educación** — notas en `/educacion` (imágenes, fuente/nombre, flag activable)
+- **Panel superadmin** (`/admin`) — cafés, pedidos (con edición de ítems) y educación
 - **Pedidos** — registro automático al checkout, códigos desde #1600, gestión en admin
-- **Supabase** — cafés, imágenes, variantes, notas de educación, pedidos
+- **Supabase** — cafés, imágenes, variantes, notas de educación, pedidos (migraciones hasta **019**)
 
 ## Documentación
 
@@ -47,11 +47,15 @@ supabase/migrations/002_coffee_images_and_variants.sql
 … (hasta la última que necesites)
 ```
 
-Para **producción** con pedidos, usá el catch-up:
+Para **producción**, según lo que falte en tu Supabase:
 
 ```
-supabase/migrations/014_customer_orders_production_catch_up.sql
+supabase/migrations/014_customer_orders_production_catch_up.sql   # pedidos
+supabase/migrations/017_education_images_catch_up.sql             # educación + imágenes
+supabase/migrations/019_coffee_extended_content_catch_text.sql    # texto “Seguí leyendo”
 ```
+
+Ver detalle en [`docs/migraciones.md`](./docs/migraciones.md).
 
 ### 3. Arrancar
 
@@ -68,8 +72,8 @@ npm run dev
 | Ruta | Descripción |
 |------|-------------|
 | `/admin` | Dashboard |
-| `/admin/coffees` | Cafés (galería, variantes 150g–1kg) |
-| `/admin/orders` | Pedidos del carrito |
+| `/admin/coffees` | Cafés (galería, variantes 150g–1kg, nota vinculada, texto “Seguí leyendo”) |
+| `/admin/orders` | Pedidos del carrito (editar ítems, finalizar, cancelar, eliminar) |
 | `/admin/education` | Notas de educación + QR |
 
 ## Scripts

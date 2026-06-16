@@ -35,6 +35,7 @@ export type CoffeeFormData = {
   short_description: string;
   long_description: string;
   extended_content_url: string;
+  extended_content_catch_text: string;
   origin: string;
   varietal: string;
   beneficio: string;
@@ -76,6 +77,7 @@ export function coffeeToFormData(coffee: Coffee): CoffeeFormData {
     extended_content_url: normalizeExtendedContentUrl(
       coffee.extended_content_url ?? "",
     ),
+    extended_content_catch_text: coffee.extended_content_catch_text?.trim() ?? "",
     origin: coffee.origin,
     varietal: coffee.varietal,
     beneficio: coffee.beneficio,

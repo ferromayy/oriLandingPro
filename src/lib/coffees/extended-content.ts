@@ -38,6 +38,26 @@ export function getExtendedContentHref(value: string): string | null {
   return normalized || null;
 }
 
+export const MAX_EXTENDED_CATCH_WORDS = 30;
+
+export const DEFAULT_EXTENDED_CATCH_BODY =
+  "Este es solo un adelanto. La historia completa, el origen y todos los detalles están en nuestra nota de Educación.";
+
+export function getDefaultExtendedCatchHeading(productName: string): string {
+  return `Conocé más sobre ${productName}`;
+}
+
+export function countWords(text: string): number {
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).length;
+}
+
+export function isValidExtendedCatchText(text: string): boolean {
+  const words = countWords(text);
+  return words > 0 && words <= MAX_EXTENDED_CATCH_WORDS;
+}
+
 export function isInternalExtendedContentHref(href: string): boolean {
   return href.startsWith("/");
 }

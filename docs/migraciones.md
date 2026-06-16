@@ -19,9 +19,16 @@ Ejecutar en **Supabase → SQL Editor** del proyecto correspondiente (local o pr
 | 011 | `011_customer_orders.sql` | Tabla `customer_orders` (pedidos del carrito) |
 | 012 | `012_customer_orders_status.sql` | Columna `status` (pendiente / finalizado / cancelado) |
 | 013 | `013_customer_orders_order_code.sql` | Columna `order_code` (código fijo desde 1600) |
-| 014 | `014_customer_orders_production_catch_up.sql` | **Catch-up idempotente** para producción |
+| 014 | `014_customer_orders_production_catch_up.sql` | **Catch-up idempotente** para pedidos en producción |
+| 015 | `015_education_note_source.sql` | Campo `source` (fuente) en notas de educación |
+| 016 | `016_education_note_nombre.sql` | Campo `nombre` en notas de educación |
+| 017 | `017_education_images_catch_up.sql` | **Catch-up idempotente** educación: tabla `education_note_images`, `source`, `nombre`, `is_primary` |
+| 018 | `018_education_note_image_primary.sql` | Imagen principal en notas; marca la primera existente como `is_primary` |
+| 019 | `019_coffee_extended_content_catch_text.sql` | Texto personalizado del bloque “Seguí leyendo” en cafés (`extended_content_catch_text`) |
 
 ## Producción (Vercel)
+
+### Pedidos
 
 Si el checkout por WhatsApp falla con:
 
@@ -35,7 +42,33 @@ supabase/migrations/014_customer_orders_production_catch_up.sql
 
 Incluye todo lo de pedidos (011 + 012 + 013) y recarga el schema cache con `notify pgrst, 'reload schema'`.
 
-Si el error persiste, en Supabase → **Settings → API** usá **Reload schema** o esperá ~1 minuto.
+### Educación e imágenes
+
+Si en admin o en `/educacion` faltan columnas (`source`, `nombre`, `is_primary`) o la tabla de imágenes de notas:
+
+```
+supabase/migrations/017_education_images_catch_up.sql
+```
+
+Luego, si hace falta marcar imágenes principales en datos ya existentes:
+
+```
+supabase/migrations/018_education_note_image_primary.sql
+```
+
+También podés ejecutar **015** y **016** por separado si solo faltan esos campos.
+
+### Texto “Seguí leyendo” en cafés
+
+Para habilitar texto personalizado en el formulario de cafés:
+
+```
+supabase/migrations/019_coffee_extended_content_catch_text.sql
+```
+
+### Schema cache
+
+Si el error persiste tras una migración, en Supabase → **Settings → API** usá **Reload schema** o esperá ~1 minuto.
 
 ## Notas
 

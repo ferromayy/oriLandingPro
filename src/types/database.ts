@@ -21,6 +21,7 @@ export type CoffeeRow = {
   short_description: string;
   long_description: string;
   extended_content_url: string;
+  extended_content_catch_text: string;
   origin: string;
   varietal: string;
   beneficio: string;

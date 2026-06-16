@@ -11,11 +11,19 @@ Documentación de las funcionalidades agregadas al proyecto que no estaban cubie
 - Rutas: `/educacion` (listado) y `/educacion/[slug]` (detalle).
 - Flag en `src/lib/site/features.ts`: `EDUCATION_PUBLIC_ENABLED`. Si es `false`, las rutas devuelven 404 y el ítem desaparece del menú.
 - El contenido largo vive **solo en Educación**; los cafés tienen descripción corta en la ficha del producto.
+- **Layout:** ancho de lectura ampliado (`max-w-[58rem]`) en listado y detalle.
+- **Imágenes en el detalle:**
+  - La imagen **principal** (`is_primary`) se muestra junto al título.
+  - Las imágenes **secundarias** aparecen **al final** del artículo, después del texto y de nombre/fuente (si existen).
+  - Componentes: `EducationNoteTitleWithImage`, `EducationNoteGallery` en `src/components/site/education-note-media.tsx`.
 
 ### Admin
 
 - Rutas: `/admin/education`, `/admin/education/new`, `/admin/education/[id]/edit`.
-- CRUD de notas con título, slug, contenido, imágenes (máx. 3) y orden.
+- CRUD de notas con título, slug, contenido, **fuente** (`source`), **nombre** (`nombre`), imágenes (máx. 3) y orden.
+- **Imagen principal:** botón “Hacer principal” en el formulario; una sola imagen marcada como `is_primary`.
+- **Upload:** acepta HEIC/HEIF; conversión a JPG con `sharp` (`src/lib/uploads/prepare-image.ts`).
+- **Guardado:** Server Actions (`src/lib/education/actions.ts`, `src/lib/uploads/actions.ts`) para evitar errores HTML/500 en Vercel.
 - **QR por nota** (`EducationNoteQr`): en la edición de cada nota se generan QR descargables para:
   - **Producción** — `NEXT_PUBLIC_SITE_URL` (ej. `https://www.oricafe.com.ar`)
   - **Vercel** — `NEXT_PUBLIC_VERCEL_SITE_URL` (si está configurada)
@@ -24,8 +32,12 @@ Documentación de las funcionalidades agregadas al proyecto que no estaban cubie
 ### Vínculo café ↔ educación
 
 - En el formulario de café (`coffee-form`) se puede elegir una nota de educación vinculada (`extended_content_url` → `/educacion/{slug}`).
-- En el sitio público, el detalle del café muestra un enlace a esa nota si está configurada.
+- En el sitio público, el detalle del café muestra el bloque **“Seguí leyendo”** (`ExtendedContentCatch`) si hay nota vinculada.
 - URLs inválidas se normalizan al cargar (`normalizeExtendedContentUrl` en `src/lib/coffees/extended-content.ts`).
+- **Texto del bloque “Seguí leyendo”** (solo si hay nota vinculada):
+  - **Predefinido** (default): título *Conocé más sobre {nombre del café}* + párrafo fijo de adelanto.
+  - **Personalizado:** párrafo propio de hasta **30 palabras** (`extended_content_catch_text` en DB). El título predefinido se mantiene.
+  - Validación en formulario y schema (`src/lib/coffees/schema.ts`); contador de palabras en vivo en admin.
 
 ---
 
@@ -44,8 +56,9 @@ Documentación de las funcionalidades agregadas al proyecto que no estaban cubie
 
 ### Ficha técnica y notas de cata
 
-- Notas de cata en la sección “Ficha técnica y notas de cata” del detalle de producto.
-- Campos: origen, varietal, beneficio, altitud, etc.
+- Campos en admin: origen, varietal, beneficio, altitud, notas de cata.
+- En el **detalle público** se muestran en la **columna derecha** (panel de compra), debajo del nombre/codename y **antes** de molienda y carrito (`ProductTechAndTasting` en `src/components/site/product-tech-tasting.tsx`).
+- La descripción corta y el bloque “Seguí leyendo” siguen en la sección inferior (`ProductDetailContent`).
 
 ### Badge “Lanzamiento”
 
@@ -118,15 +131,16 @@ Constante del primer código: `ORDER_CODE_START = 1600` en `src/lib/orders/types
 
 ### Acciones por pedido
 
-Componente: `src/components/admin/order-actions.tsx`
+Componentes: `src/components/admin/order-actions.tsx`, `src/components/admin/order-items-editor.tsx`
 
 | Acción | Efecto |
 |--------|--------|
+| **Editar productos** | Modal para cambiar cantidades, quitar ítems o agregar cafés (tamaño, molienda, cantidad). Recalcula total y mensaje de WhatsApp. |
 | **Finalizar** | `status` → `completed` |
 | **Cancelar** | `status` → `cancelled` |
 | **Eliminar** | Borra el pedido y renumera los `order_number` posteriores |
 
-API admin: `PATCH /api/admin/orders/[id]` (estado), `DELETE /api/admin/orders/[id]` (eliminar).
+API admin: `PATCH /api/admin/orders/[id]` acepta `{ status }` **o** `{ items, total }`; `DELETE /api/admin/orders/[id]` elimina el pedido.
 
 ### API pública
 
@@ -157,6 +171,19 @@ Si en Supabase falta la columna `order_code`, `createCustomerOrder` intenta un i
 - Proyecto de referencia: `ori-landing-pro-gutw` (`https://ori-landing-pro-gutw.vercel.app`).
 - El dominio `ori-landing-pro.vercel.app` puede dar 404 si apunta a otro proyecto; el dominio custom debe apuntar al proyecto correcto en Vercel.
 - **Importante:** las migraciones SQL deben ejecutarse en el **mismo proyecto Supabase** que usan las variables de Vercel.
+- `next.config.ts` incluye `serverExternalPackages: ["sharp"]` y `serverActions.bodySizeLimit: "8mb"` para uploads de imágenes en admin.
+
+### Desarrollo local (Turbopack)
+
+Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`@swc/helpers`, React Client Manifest):
+
+1. Puede haber un `package-lock.json` en la carpeta de usuario (`~/`) que confunde a Turbopack.
+2. El proyecto fija la raíz en `next.config.ts` (`turbopack.root` y `outputFileTracingRoot`).
+3. **Solución:** parar el servidor, borrar `.next` y volver a arrancar:
+   ```bash
+   rm -rf .next && npm run dev
+   ```
+4. Opcional: renombrar o eliminar el `package-lock.json` suelto en `~/` si no lo necesitás.
 
 ---
 
@@ -166,13 +193,17 @@ Si en Supabase falta la columna `order_code`, `createCustomerOrder` intenta un i
 |------|----------|
 | Pedidos — lógica | `src/lib/orders/admin.ts`, `types.ts`, `schema.ts`, `display.ts`, `checkout.ts` |
 | Pedidos — API | `src/app/api/orders/route.ts`, `src/app/api/admin/orders/` |
-| Pedidos — UI admin | `src/app/admin/(protected)/orders/page.tsx`, `src/components/admin/order-actions.tsx` |
+| Pedidos — UI admin | `src/app/admin/(protected)/orders/page.tsx`, `src/components/admin/order-actions.tsx`, `order-items-editor.tsx` |
 | WhatsApp | `src/lib/site/whatsapp-order.ts` |
 | Carrito | `src/components/site/cart-context.tsx`, `cart-drawer.tsx` |
 | Educación | `src/lib/education/`, `src/app/(site)/educacion/`, `src/app/admin/(protected)/education/` |
+| Educación — media pública | `src/components/site/education-note-media.tsx` |
 | QR educación | `src/components/admin/education-note-qr.tsx`, `src/lib/site/public-url.ts` |
-| Cafés | `src/lib/coffees/`, `src/components/admin/coffee-form.tsx` |
+| Cafés — detalle público | `src/components/site/product-tech-tasting.tsx`, `extended-content-catch.tsx`, `product-purchase-panel.tsx` |
+| Cafés — admin | `src/lib/coffees/`, `src/components/admin/coffee-form.tsx` |
+| Uploads admin | `src/lib/uploads/prepare-image.ts`, `src/lib/uploads/actions.ts` |
 | Features / flags | `src/lib/site/features.ts` |
+| Config Next.js | `next.config.ts` |
 | Migraciones | `supabase/migrations/` (ver [migraciones.md](./migraciones.md)) |
 
 ---
@@ -192,4 +223,4 @@ Si en Supabase falta la columna `order_code`, `createCustomerOrder` intenta un i
 
 ---
 
-*Última actualización: junio 2026 — incluye pedidos, códigos desde 1600, estados, eliminación con renumeración y catch-up de producción.*
+*Última actualización: junio 2026 — educación (imágenes principal/secundarias, fuente/nombre, layout), edición de ítems en pedidos, ficha técnica arriba en detalle de café, texto personalizado del bloque “Seguí leyendo”, migraciones 015–019 y notas de desarrollo con Turbopack.*

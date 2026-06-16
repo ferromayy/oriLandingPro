@@ -27,7 +27,11 @@ export function ProductDetailContent({ coffee }: { coffee: Coffee }) {
           <div>
             {showStory && storyBlocks.map(renderBlock)}
             {showExtendedCatch && extendedUrl && (
-              <ExtendedContentCatch url={extendedUrl} productName={coffee.name} />
+              <ExtendedContentCatch
+                url={extendedUrl}
+                productName={coffee.name}
+                customCatchText={coffee.extended_content_catch_text}
+              />
             )}
           </div>
         </div>
