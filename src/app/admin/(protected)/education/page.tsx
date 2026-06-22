@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAllEducationNotesAdmin } from "@/lib/education/admin";
+import { getEducationExcerpt } from "@/lib/education/content";
 import { DeleteEducationNoteButton } from "@/components/admin/delete-education-note-button";
 
 export default async function AdminEducationPage() {
@@ -61,7 +62,7 @@ export default async function AdminEducationPage() {
                     /educacion/{note.slug}
                   </p>
                   <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
-                    {note.content}
+                    {getEducationExcerpt(note.content, 120)}
                   </p>
                 </td>
                 <td className="px-4 py-3 text-zinc-600">

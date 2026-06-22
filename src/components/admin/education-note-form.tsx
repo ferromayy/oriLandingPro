@@ -10,6 +10,7 @@ import {
   inputErrorClass,
   sectionErrorClass,
 } from "@/components/admin/form-notifications";
+import { EducationContentEditor } from "@/components/admin/education-content-editor";
 import { saveEducationNoteAction } from "@/lib/education/actions";
 import { uploadAdminImageAction } from "@/lib/uploads/actions";
 import {
@@ -320,15 +321,13 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
             <label className="block text-sm font-medium text-zinc-700">
               Contenido
             </label>
-            <textarea
-              value={form.content}
-              onChange={(e) => updateField("content", e.target.value)}
-              rows={10}
-              className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
-                fieldHasError(issues, "content") ? inputErrorClass : "border-zinc-300"
-              }`}
-              placeholder="Escribí la nota educativa..."
-            />
+            <div className="mt-1">
+              <EducationContentEditor
+                value={form.content}
+                onChange={(content) => updateField("content", content)}
+                hasError={fieldHasError(issues, "content")}
+              />
+            </div>
           </div>
 
           <div

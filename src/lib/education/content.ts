@@ -1,10 +1,12 @@
+import { stripMarkdown } from "@/lib/education/markdown";
+
 const DEFAULT_EXCERPT_LENGTH = 320;
 
 export function getEducationExcerpt(
   content: string,
   maxLength = DEFAULT_EXCERPT_LENGTH,
 ): string {
-  const normalized = content.trim().replace(/\s+/g, " ");
+  const normalized = stripMarkdown(content).replace(/\s+/g, " ");
   if (normalized.length <= maxLength) return normalized;
 
   const cut = normalized.slice(0, maxLength);
@@ -15,5 +17,5 @@ export function getEducationExcerpt(
 }
 
 export function educationNoteHasMore(content: string, maxLength = DEFAULT_EXCERPT_LENGTH): boolean {
-  return content.trim().replace(/\s+/g, " ").length > maxLength;
+  return stripMarkdown(content).replace(/\s+/g, " ").length > maxLength;
 }

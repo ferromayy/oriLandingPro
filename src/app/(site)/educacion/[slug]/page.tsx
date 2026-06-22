@@ -4,6 +4,7 @@ import {
   EducationNoteGallery,
   EducationNoteTitleWithImage,
 } from "@/components/site/education-note-media";
+import { EducationNoteContent } from "@/components/site/education-note-content";
 import { getEducationNoteBySlug } from "@/lib/education/queries";
 import { EDUCATION_PUBLIC_ENABLED } from "@/lib/site/features";
 
@@ -37,9 +38,7 @@ export default async function EducacionNotePage({ params }: Props) {
           titleAs="h1"
         />
 
-        <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-gray-600 sm:text-base">
-          {note.content}
-        </div>
+        <EducationNoteContent content={note.content} className="mt-6" />
 
         {(note.nombre?.trim() || note.source?.trim()) && (
           <div className="mt-8 space-y-1 border-t border-gray-100 pt-4 text-xs text-gray-400">
