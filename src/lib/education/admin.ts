@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ensurePrimaryImageFlag } from "@/lib/education/helpers";
+import { ensureEducationImageFlags } from "@/lib/education/helpers";
 import { EDUCATION_NOTE_SELECT } from "@/lib/education/select";
 import type {
   EducationNote,
@@ -92,20 +92,32 @@ async function syncImages(
   noteId: string,
   images: EducationNoteFormData["images"],
 ) {
-  const normalized = ensurePrimaryImageFlag(images);
+  const normalized = ensureEducationImageFlags(images);
 
   await supabase.from("education_note_images").delete().eq("education_note_id", noteId);
 
   if (normalized.length === 0) return;
 
-  const withPrimary = normalized.map((image, index) => ({
+  const withFlags = normalized.map((image, index) => ({
     education_note_id: noteId,
     url: image.url.trim(),
     sort_order: image.sort_order ?? index,
     is_primary: image.is_primary,
+    is_inline: image.is_inline,
   }));
 
-  let result = await supabase.from("education_note_images").insert(withPrimary);
+  let result = await supabase.from("education_note_images").insert(withFlags);
+
+  if (result.error && isMissingColumnError(result.error.message, "is_inline")) {
+    result = await supabase.from("education_note_images").insert(
+      normalized.map((image, index) => ({
+        education_note_id: noteId,
+        url: image.url.trim(),
+        sort_order: image.sort_order ?? index,
+        is_primary: image.is_primary,
+      })),
+    );
+  }
 
   if (result.error && isMissingColumnError(result.error.message, "is_primary")) {
     result = await supabase.from("education_note_images").insert(

@@ -3,9 +3,12 @@
 import { useRef, useState } from "react";
 import { EducationNoteContent } from "@/components/site/education-note-content";
 
+import { normalizeEducationMarkdown } from "@/lib/education/markdown";
+
 type Props = {
   value: string;
   onChange: (value: string) => void;
+  noteTitle?: string;
   hasError?: boolean;
 };
 
@@ -30,7 +33,7 @@ function inputClass(hasError: boolean): string {
   }`;
 }
 
-export function EducationContentEditor({ value, onChange, hasError = false }: Props) {
+export function EducationContentEditor({ value, onChange, noteTitle, hasError = false }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -93,12 +96,20 @@ export function EducationContentEditor({ value, onChange, hasError = false }: Pr
         >
           {showPreview ? "Editar" : "Vista previa"}
         </button>
+        <button
+          type="button"
+          onClick={() => onChange(normalizeEducationMarkdown(value, noteTitle))}
+          className="rounded border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+          title="Quita título duplicado y líneas extra de ChatGPT"
+        >
+          Limpiar texto GPT
+        </button>
       </div>
 
       {showPreview ? (
         <div className="min-h-[240px] rounded-lg border border-zinc-200 bg-zinc-50 p-4">
           {value.trim() ? (
-            <EducationNoteContent content={value} />
+            <EducationNoteContent content={value} noteTitle={noteTitle} />
           ) : (
             <p className="text-sm text-zinc-500">Escribí contenido para ver la vista previa.</p>
           )}
@@ -124,10 +135,12 @@ Dejá una línea en blanco entre párrafos.`}
       )}
 
       <p className="text-xs text-zinc-500">
-        Usá <code className="rounded bg-zinc-100 px-1">##</code> para subtítulos,{" "}
-        <code className="rounded bg-zinc-100 px-1">**texto**</code> para negrita y{" "}
-        <code className="rounded bg-zinc-100 px-1">-</code> para listas. Las notas
-        anteriores sin formato siguen viéndose igual.
+        Si pegás desde <strong>ChatGPT</strong>, vas a ver símbolos como{" "}
+        <code className="rounded bg-zinc-100 px-1">#</code>,{" "}
+        <code className="rounded bg-zinc-100 px-1">##</code> y{" "}
+        <code className="rounded bg-zinc-100 px-1">*</code> en el editor: es normal. En el
+        sitio se convierten en títulos, negritas y listas. Usá{" "}
+        <strong>Vista previa</strong> o <strong>Limpiar texto GPT</strong> antes de guardar.
       </p>
     </div>
   );

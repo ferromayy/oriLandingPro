@@ -89,6 +89,7 @@ export type EducationNoteImageRow = {
   url: string;
   sort_order: number;
   is_primary: boolean;
+  is_inline: boolean;
   created_at: string;
 };
 
@@ -150,9 +151,10 @@ export type Database = {
       };
       education_note_images: {
         Row: EducationNoteImageRow;
-        Insert: Omit<EducationNoteImageRow, "id" | "created_at" | "is_primary"> & {
+        Insert: Omit<EducationNoteImageRow, "id" | "created_at" | "is_primary" | "is_inline"> & {
           id?: string;
           is_primary?: boolean;
+          is_inline?: boolean;
           created_at?: string;
         };
         Update: Partial<EducationNoteImageRow>;

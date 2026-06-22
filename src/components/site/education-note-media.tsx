@@ -1,7 +1,8 @@
 import Image from "next/image";
 import {
+  getFooterEducationImages,
+  getInlineEducationImage,
   getPrimaryEducationImage,
-  getSecondaryEducationImages,
 } from "@/lib/education/helpers";
 import type { EducationNote } from "@/lib/education/types";
 
@@ -49,7 +50,7 @@ export function EducationNoteTitleWithImage({
 }
 
 export function EducationNoteGallery({ note }: { note: EducationNote }) {
-  const galleryImages = getSecondaryEducationImages(note);
+  const galleryImages = getFooterEducationImages(note);
 
   if (galleryImages.length === 0) return null;
 
@@ -78,5 +79,25 @@ export function EducationNoteGallery({ note }: { note: EducationNote }) {
         </div>
       ))}
     </div>
+  );
+}
+
+export function EducationNoteInlineImage({
+  url,
+}: {
+  url: string;
+}) {
+  return (
+    <figure className="my-10 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+      <div className="relative aspect-[16/10] w-full">
+        <Image
+          src={url}
+          alt=""
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 928px"
+        />
+      </div>
+    </figure>
   );
 }

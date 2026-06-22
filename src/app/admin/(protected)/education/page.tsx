@@ -66,7 +66,7 @@ export default async function AdminEducationPage() {
                   </p>
                 </td>
                 <td className="px-4 py-3 text-zinc-600">
-                  {note.education_note_images.length} / 3
+                  {note.education_note_images.length} / 6
                 </td>
                 <td className="px-4 py-3 text-zinc-600">{note.sort_order}</td>
                 <td className="px-4 py-3">

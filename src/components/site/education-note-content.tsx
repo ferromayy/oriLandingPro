@@ -3,13 +3,14 @@ import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import { normalizeEducationMarkdown } from "@/lib/education/markdown";
+
+const headingClass =
+  "mt-10 mb-3 border-b border-gray-200 pb-2 text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl";
 
 const markdownComponents: Components = {
-  h2: ({ children }) => (
-    <h2 className="mt-10 mb-3 border-b border-gray-200 pb-2 text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-      {children}
-    </h2>
-  ),
+  h1: ({ children }) => <h2 className={headingClass}>{children}</h2>,
+  h2: ({ children }) => <h2 className={headingClass}>{children}</h2>,
   h3: ({ children }) => (
     <h3 className="mt-8 mb-2 text-lg font-semibold text-gray-900">{children}</h3>
   ),
@@ -64,17 +65,20 @@ const markdownComponents: Components = {
 
 type Props = {
   content: string;
+  noteTitle?: string;
   className?: string;
 };
 
-export function EducationNoteContent({ content, className = "" }: Props) {
+export function EducationNoteContent({ content, noteTitle, className = "" }: Props) {
+  const prepared = normalizeEducationMarkdown(content, noteTitle);
+
   return (
     <div className={`education-note-content ${className}`.trim()}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={markdownComponents}
       >
-        {content}
+        {prepared}
       </ReactMarkdown>
     </div>
   );

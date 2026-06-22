@@ -1,8 +1,15 @@
-import { ensurePrimaryImageFlag } from "@/lib/education/helpers";
+import { ensureEducationImageFlags } from "@/lib/education/helpers";
 import { slugify } from "@/lib/coffees/types";
 import type { EducationNoteImageRow, EducationNoteRow } from "@/types/database";
 
-export const MAX_EDUCATION_NOTE_IMAGES = 3;
+export const MAX_EDUCATION_PRIMARY_IMAGES = 1;
+export const MAX_EDUCATION_INLINE_IMAGES = 1;
+export const MAX_EDUCATION_FOOTER_IMAGES = 4;
+export const MIN_EDUCATION_FOOTER_IMAGES = 2;
+export const MAX_EDUCATION_NOTE_IMAGES =
+  MAX_EDUCATION_PRIMARY_IMAGES +
+  MAX_EDUCATION_INLINE_IMAGES +
+  MAX_EDUCATION_FOOTER_IMAGES;
 
 export type EducationNote = EducationNoteRow & {
   education_note_images: EducationNoteImageRow[];
@@ -12,6 +19,7 @@ export type EducationNoteImageForm = {
   url: string;
   sort_order: number;
   is_primary: boolean;
+  is_inline: boolean;
 };
 
 export type EducationNoteFormData = {
@@ -42,11 +50,12 @@ export function toEducationNoteFormData(note: EducationNote): EducationNoteFormD
     content: normalized.content,
     source: normalized.source ?? "",
     nombre: normalized.nombre ?? "",
-    images: ensurePrimaryImageFlag(
+    images: ensureEducationImageFlags(
       normalized.education_note_images.map((image) => ({
         url: image.url,
         sort_order: image.sort_order,
         is_primary: image.is_primary ?? false,
+        is_inline: image.is_inline ?? false,
       })),
     ),
     is_active: normalized.is_active,

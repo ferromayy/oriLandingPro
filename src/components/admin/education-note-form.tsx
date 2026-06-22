@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   FormErrorBanner,
   FormToast,
@@ -11,15 +10,12 @@ import {
   sectionErrorClass,
 } from "@/components/admin/form-notifications";
 import { EducationContentEditor } from "@/components/admin/education-content-editor";
+import { EducationNoteImagesEditor } from "@/components/admin/education-note-images-editor";
 import { saveEducationNoteAction } from "@/lib/education/actions";
-import { uploadAdminImageAction } from "@/lib/uploads/actions";
 import {
-  MAX_EDUCATION_NOTE_IMAGES,
   slugify,
   type EducationNoteFormData,
-  type EducationNoteImageForm,
 } from "@/lib/education/types";
-import { IMAGE_UPLOAD_ACCEPT } from "@/lib/uploads/image-types";
 import {
   validateEducationNoteForm,
   type FormValidationIssue,
@@ -51,9 +47,6 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
   );
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [imageUrlDraft, setImageUrlDraft] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [issues, setIssues] = useState<FormValidationIssue[]>([]);
   const [showToast, setShowToast] = useState(false);
 
@@ -82,140 +75,6 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
       return next;
     });
   }
-
-  function setPrimaryImage(index: number) {
-    clearIssues();
-    setForm((prev) => ({
-      ...prev,
-      images: prev.images.map((image, i) => ({
-        ...image,
-        is_primary: i === index,
-      })),
-    }));
-  }
-
-  function removeImage(index: number) {
-    clearIssues();
-    setForm((prev) => {
-      const next = prev.images.filter((_, i) => i !== index);
-      if (next.length > 0 && !next.some((image) => image.is_primary)) {
-        next[0] = { ...next[0], is_primary: true };
-      }
-      return {
-        ...prev,
-        images: next.map((image, i) => ({ ...image, sort_order: i })),
-      };
-    });
-  }
-
-  function moveImage(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= form.images.length) return;
-
-    setForm((prev) => {
-      const next = [...prev.images];
-      [next[index], next[target]] = [next[target], next[index]];
-      return {
-        ...prev,
-        images: next.map((image, i) => ({ ...image, sort_order: i })),
-      };
-    });
-  }
-
-  function appendImages(newImages: EducationNoteImageForm[]) {
-    setForm((prev) => {
-      const remaining = MAX_EDUCATION_NOTE_IMAGES - prev.images.length;
-      const toAdd = newImages.slice(0, remaining);
-      if (toAdd.length === 0) return prev;
-
-      const merged = [...prev.images, ...toAdd].map((image, index) => ({
-        ...image,
-        sort_order: index,
-      }));
-
-      if (!merged.some((image) => image.is_primary) && merged.length > 0) {
-        merged[0] = { ...merged[0], is_primary: true };
-      }
-
-      return { ...prev, images: merged };
-    });
-  }
-
-  function addImageFromUrl() {
-    const url = imageUrlDraft.trim();
-    if (!url) return;
-
-    if (form.images.length >= MAX_EDUCATION_NOTE_IMAGES) {
-      showValidationErrors([
-        {
-          field: "images",
-          message: `Máximo ${MAX_EDUCATION_NOTE_IMAGES} imágenes por nota`,
-        },
-      ]);
-      return;
-    }
-
-    clearIssues();
-    appendImages([
-      {
-        url,
-        sort_order: form.images.length,
-        is_primary: form.images.length === 0,
-      },
-    ]);
-    setImageUrlDraft("");
-  }
-
-  async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = event.target.files;
-    if (!files?.length) return;
-
-    const remaining = MAX_EDUCATION_NOTE_IMAGES - form.images.length;
-    if (remaining <= 0) {
-      showValidationErrors([
-        {
-          field: "images",
-          message: `Máximo ${MAX_EDUCATION_NOTE_IMAGES} imágenes por nota`,
-        },
-      ]);
-      return;
-    }
-
-    setUploading(true);
-    clearIssues();
-
-    try {
-      const uploaded: EducationNoteImageForm[] = [];
-
-      for (const file of Array.from(files).slice(0, remaining)) {
-        const body = new FormData();
-        body.append("file", file);
-        const result = await uploadAdminImageAction(body);
-        if (!result.ok) {
-          throw new Error(result.message);
-        }
-        uploaded.push({
-          url: result.url,
-          sort_order: form.images.length + uploaded.length,
-          is_primary: form.images.length === 0 && uploaded.length === 0,
-        });
-      }
-
-      appendImages(uploaded);
-    } catch (err) {
-      showValidationErrors([
-        {
-          field: "images",
-          message: err instanceof Error ? err.message : "Error al subir imagen",
-        },
-      ]);
-    } finally {
-      setUploading(false);
-      event.target.value = "";
-    }
-  }
-
-  const imageSlotsRemaining = MAX_EDUCATION_NOTE_IMAGES - form.images.length;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -325,6 +184,7 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
               <EducationContentEditor
                 value={form.content}
                 onChange={(content) => updateField("content", content)}
+                noteTitle={form.title}
                 hasError={fieldHasError(issues, "content")}
               />
             </div>
@@ -334,156 +194,25 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
             id="education-section-images"
             className={`space-y-4 ${fieldHasError(issues, "images") ? sectionErrorClass : ""}`}
           >
-            <div className="flex flex-wrap items-end justify-between gap-2">
-              <div>
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-                  Imágenes (opcional)
-                </h2>
-                <p className="mt-1 text-xs text-zinc-500">
-                  Hasta {MAX_EDUCATION_NOTE_IMAGES} imágenes. Marcá una como{" "}
-                  <strong>principal</strong> — aparece junto al título en el sitio.
-                  Acepta JPG, PNG, WebP y HEIC.
-                </p>
-              </div>
-              <span className="font-mono text-xs text-zinc-400">
-                {form.images.length} / {MAX_EDUCATION_NOTE_IMAGES}
-              </span>
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+                Imágenes (opcional)
+              </h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                Organizá la nota con una imagen principal, otra al medio del texto y al menos
+                dos al final.
+              </p>
             </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={IMAGE_UPLOAD_ACCEPT}
-              multiple
-              className="hidden"
-              disabled={uploading || imageSlotsRemaining <= 0}
-              onChange={handleImageUpload}
+            <EducationNoteImagesEditor
+              images={form.images}
+              onChange={(images) => updateField("images", images)}
+              hasError={fieldHasError(issues, "images")}
+              onUploadError={(message) =>
+                showValidationErrors([{ field: "images", message }])
+              }
+              onClearError={clearIssues}
             />
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {Array.from({ length: MAX_EDUCATION_NOTE_IMAGES }).map((_, slotIndex) => {
-                const image = form.images[slotIndex];
-
-                if (image) {
-                  return (
-                    <div
-                      key={`${image.url}-${slotIndex}`}
-                      className={`rounded-lg border p-3 ${
-                        image.is_primary
-                          ? "border-zinc-900 ring-1 ring-zinc-900"
-                          : "border-zinc-200"
-                      }`}
-                    >
-                      <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
-                        Imagen {slotIndex + 1}
-                        {image.is_primary && (
-                          <span className="ml-1 normal-case text-zinc-600">· principal</span>
-                        )}
-                      </p>
-                      <div className="relative mb-3 aspect-square w-full overflow-hidden rounded bg-zinc-100">
-                        <Image
-                          src={image.url}
-                          alt={`Imagen ${slotIndex + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="200px"
-                        />
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setPrimaryImage(slotIndex)}
-                          className={`rounded px-2 py-1 text-xs ${
-                            image.is_primary
-                              ? "bg-zinc-900 text-white"
-                              : "border border-zinc-300 hover:bg-zinc-50"
-                          }`}
-                        >
-                          {image.is_primary ? "★ Principal" : "Hacer principal"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveImage(slotIndex, -1)}
-                          disabled={slotIndex === 0}
-                          className="rounded border border-zinc-300 px-2 py-1 text-xs disabled:opacity-40"
-                        >
-                          ←
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveImage(slotIndex, 1)}
-                          disabled={slotIndex === form.images.length - 1}
-                          className="rounded border border-zinc-300 px-2 py-1 text-xs disabled:opacity-40"
-                        >
-                          →
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeImage(slotIndex)}
-                          className="rounded border border-red-200 px-2 py-1 text-xs text-red-700"
-                        >
-                          Quitar
-                        </button>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <button
-                    key={`empty-slot-${slotIndex}`}
-                    type="button"
-                    disabled={uploading || slotIndex !== form.images.length}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex aspect-square flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-3 text-center transition hover:border-zinc-400 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <span className="text-2xl text-zinc-300">+</span>
-                    <span className="mt-2 text-xs text-zinc-500">
-                      {slotIndex === form.images.length
-                        ? uploading
-                          ? "Subiendo…"
-                          : "Agregar imagen"
-                        : `Imagen ${slotIndex + 1}`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {imageSlotsRemaining > 0 && (
-              <div className="flex flex-wrap items-end gap-2 border-t border-zinc-100 pt-4">
-                <div className="min-w-[200px] flex-1">
-                  <label
-                    htmlFor="education-image-url"
-                    className="text-xs text-zinc-400"
-                  >
-                    O pegá una URL de imagen
-                  </label>
-                  <input
-                    id="education-image-url"
-                    type="text"
-                    value={imageUrlDraft}
-                    onChange={(e) => setImageUrlDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addImageFromUrl();
-                      }
-                    }}
-                    placeholder="/images/... o https://..."
-                    className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={addImageFromUrl}
-                  disabled={!imageUrlDraft.trim() || uploading}
-                  className="rounded-lg border border-zinc-300 px-3 py-2 text-sm hover:bg-zinc-50 disabled:opacity-50"
-                >
-                  Agregar URL
-                </button>
-              </div>
-            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

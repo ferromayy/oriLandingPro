@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EducationNoteBody } from "@/components/site/education-note-body";
 import {
   EducationNoteGallery,
   EducationNoteTitleWithImage,
 } from "@/components/site/education-note-media";
-import { EducationNoteContent } from "@/components/site/education-note-content";
 import { getEducationNoteBySlug } from "@/lib/education/queries";
 import { EDUCATION_PUBLIC_ENABLED } from "@/lib/site/features";
 
@@ -38,7 +38,7 @@ export default async function EducacionNotePage({ params }: Props) {
           titleAs="h1"
         />
 
-        <EducationNoteContent content={note.content} className="mt-6" />
+        <EducationNoteBody note={note} />
 
         {(note.nombre?.trim() || note.source?.trim()) && (
           <div className="mt-8 space-y-1 border-t border-gray-100 pt-4 text-xs text-gray-400">
