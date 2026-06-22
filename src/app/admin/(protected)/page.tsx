@@ -1,12 +1,15 @@
 import Link from "next/link";
+import { OrderAnalyticsDashboard } from "@/components/admin/order-analytics-dashboard";
 import { getAllCoffeesAdmin } from "@/lib/coffees/admin";
 import { getAllEducationNotesAdmin } from "@/lib/education/admin";
 import { getAllCustomerOrdersAdmin } from "@/lib/orders/admin";
+import { computeOrderAnalytics } from "@/lib/orders/analytics";
 
 export default async function AdminDashboardPage() {
   let coffeeCount = 0;
   let educationCount = 0;
   let orderCount = 0;
+  let analytics = computeOrderAnalytics([]);
   let error: string | null = null;
 
   try {
@@ -18,6 +21,7 @@ export default async function AdminDashboardPage() {
     coffeeCount = coffees.length;
     educationCount = notes.length;
     orderCount = orders.length;
+    analytics = computeOrderAnalytics(orders);
   } catch (err) {
     error = err instanceof Error ? err.message : "Error al conectar con Supabase";
   }
@@ -27,7 +31,7 @@ export default async function AdminDashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900">Dashboard</h1>
         <p className="mt-1 text-sm text-zinc-600">
-          Gestioná cafés, pedidos y notas de educación del sitio.
+          Resumen de ventas, pedidos y acceso rápido al panel.
         </p>
       </div>
 
@@ -43,10 +47,18 @@ export default async function AdminDashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {!error && <OrderAnalyticsDashboard analytics={analytics} />}
+
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-zinc-200 bg-white p-6">
           <p className="text-sm text-zinc-500">Cafés en catálogo</p>
           <p className="mt-2 text-3xl font-semibold text-zinc-900">{coffeeCount}</p>
+          <Link
+            href="/admin/coffees"
+            className="mt-3 inline-block text-xs font-medium text-zinc-600 underline hover:text-zinc-900"
+          >
+            Gestionar cafés
+          </Link>
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white p-6">
           <p className="text-sm text-zinc-500">Pedidos registrados</p>
@@ -61,6 +73,12 @@ export default async function AdminDashboardPage() {
         <div className="rounded-xl border border-zinc-200 bg-white p-6">
           <p className="text-sm text-zinc-500">Notas de educación</p>
           <p className="mt-2 text-3xl font-semibold text-zinc-900">{educationCount}</p>
+          <Link
+            href="/admin/education"
+            className="mt-3 inline-block text-xs font-medium text-zinc-600 underline hover:text-zinc-900"
+          >
+            Gestionar educación
+          </Link>
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white p-6">
           <p className="text-sm text-zinc-500">Acciones rápidas</p>
@@ -79,7 +97,7 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
