@@ -62,7 +62,7 @@ export default async function AdminEducationPage() {
                     /educacion/{note.slug}
                   </p>
                   <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
-                    {getEducationExcerpt(note.content, 120)}
+                    {getEducationExcerpt(note, 120)}
                   </p>
                 </td>
                 <td className="px-4 py-3 text-zinc-600">

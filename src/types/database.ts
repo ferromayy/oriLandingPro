@@ -62,6 +62,8 @@ export type EducationNoteRow = {
   title: string;
   slug: string;
   content: string;
+  content_before_image: string;
+  content_after_image: string;
   source: string;
   nombre: string;
   is_active: boolean;
@@ -72,11 +74,13 @@ export type EducationNoteRow = {
 
 export type EducationNoteInsert = Omit<
   EducationNoteRow,
-  "id" | "created_at" | "updated_at" | "source" | "nombre"
+  "id" | "created_at" | "updated_at" | "source" | "nombre" | "content_before_image" | "content_after_image"
 > & {
   id?: string;
   source?: string;
   nombre?: string;
+  content_before_image?: string;
+  content_after_image?: string;
   created_at?: string;
   updated_at?: string;
 };

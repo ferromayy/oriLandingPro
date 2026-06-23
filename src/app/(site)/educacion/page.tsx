@@ -33,8 +33,8 @@ export default async function EducacionPage() {
       ) : (
         <div className="space-y-6">
           {notes.map((note) => {
-            const excerpt = getEducationExcerpt(note.content);
-            const hasMore = educationNoteHasMore(note.content);
+            const excerpt = getEducationExcerpt(note);
+            const hasMore = educationNoteHasMore(note);
 
             return (
               <article

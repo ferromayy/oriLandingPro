@@ -1,3 +1,4 @@
+import { combineEducationContent } from "@/lib/education/content";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureEducationImageFlags } from "@/lib/education/helpers";
 import { EDUCATION_NOTE_SELECT } from "@/lib/education/select";
@@ -17,14 +18,29 @@ function isMissingColumnError(message: string, column: string): boolean {
   );
 }
 
+function buildContentFields(data: EducationNoteFormData) {
+  const content_before_image = data.content_before_image.trim();
+  const content_after_image = data.content_after_image.trim();
+  return {
+    content_before_image,
+    content_after_image,
+    content: combineEducationContent(content_before_image, content_after_image),
+  };
+}
+
 function coreNotePayload(data: EducationNoteFormData) {
   return {
     title: data.title.trim(),
     slug: data.slug.trim(),
-    content: data.content.trim(),
+    ...buildContentFields(data),
     is_active: data.is_active,
     sort_order: data.sort_order,
   };
+}
+
+function legacyNotePayload(data: EducationNoteFormData) {
+  const { content, title, slug, is_active, sort_order } = coreNotePayload(data);
+  return { title, slug, content, is_active, sort_order };
 }
 
 function fullNotePayload(data: EducationNoteFormData) {
@@ -45,11 +61,25 @@ async function insertEducationNote(
   if (
     result.error &&
     (isMissingColumnError(result.error.message, "source") ||
+      isMissingColumnError(result.error.message, "nombre") ||
+      isMissingColumnError(result.error.message, "content_before_image") ||
+      isMissingColumnError(result.error.message, "content_after_image"))
+  ) {
+    result = await supabase
+      .from("education_notes")
+      .insert(legacyNotePayload(data))
+      .select("id")
+      .single();
+  }
+
+  if (
+    result.error &&
+    (isMissingColumnError(result.error.message, "source") ||
       isMissingColumnError(result.error.message, "nombre"))
   ) {
     result = await supabase
       .from("education_notes")
-      .insert(coreNotePayload(data))
+      .insert(legacyNotePayload(data))
       .select("id")
       .single();
   }
@@ -73,12 +103,28 @@ async function updateEducationNoteRow(
   if (
     result.error &&
     (isMissingColumnError(result.error.message, "source") ||
+      isMissingColumnError(result.error.message, "nombre") ||
+      isMissingColumnError(result.error.message, "content_before_image") ||
+      isMissingColumnError(result.error.message, "content_after_image"))
+  ) {
+    result = await supabase
+      .from("education_notes")
+      .update({
+        ...legacyNotePayload(data),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+  }
+
+  if (
+    result.error &&
+    (isMissingColumnError(result.error.message, "source") ||
       isMissingColumnError(result.error.message, "nombre"))
   ) {
     result = await supabase
       .from("education_notes")
       .update({
-        ...coreNotePayload(data),
+        ...legacyNotePayload(data),
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);

@@ -24,7 +24,8 @@ import {
 const emptyForm: EducationNoteFormData = {
   title: "",
   slug: "",
-  content: "",
+  content_before_image: "",
+  content_after_image: "",
   source: "",
   nombre: "",
   images: [],
@@ -176,16 +177,36 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
             </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-700">
-              Contenido
-            </label>
-            <div className="mt-1">
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-zinc-700">
+                Texto superior
+              </label>
+              <p className="mt-1 mb-2 text-xs text-zinc-500">
+                Aparece arriba de la imagen del medio. Si no usás imagen al medio, este
+                texto va primero y el inferior continúa debajo.
+              </p>
               <EducationContentEditor
-                value={form.content}
-                onChange={(content) => updateField("content", content)}
+                value={form.content_before_image}
+                onChange={(content) => updateField("content_before_image", content)}
                 noteTitle={form.title}
-                hasError={fieldHasError(issues, "content")}
+                hasError={fieldHasError(issues, "content_before_image")}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-zinc-700">
+                Texto inferior
+              </label>
+              <p className="mt-1 mb-2 text-xs text-zinc-500">
+                Aparece debajo de la imagen del medio. Dejalo vacío si no querés cortar la
+                nota en dos partes.
+              </p>
+              <EducationContentEditor
+                value={form.content_after_image}
+                onChange={(content) => updateField("content_after_image", content)}
+                noteTitle={form.title}
+                hasError={fieldHasError(issues, "content_after_image")}
               />
             </div>
           </div>

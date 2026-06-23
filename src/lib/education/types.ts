@@ -1,3 +1,4 @@
+import { combineEducationContent, getEducationContentAfter, getEducationContentBefore } from "@/lib/education/content";
 import { ensureEducationImageFlags } from "@/lib/education/helpers";
 import { slugify } from "@/lib/coffees/types";
 import type { EducationNoteImageRow, EducationNoteRow } from "@/types/database";
@@ -25,7 +26,8 @@ export type EducationNoteImageForm = {
 export type EducationNoteFormData = {
   title: string;
   slug: string;
-  content: string;
+  content_before_image: string;
+  content_after_image: string;
   source: string;
   nombre: string;
   images: EducationNoteImageForm[];
@@ -36,6 +38,8 @@ export type EducationNoteFormData = {
 export function normalizeEducationNote(raw: EducationNote): EducationNote {
   return {
     ...raw,
+    content_before_image: raw.content_before_image ?? "",
+    content_after_image: raw.content_after_image ?? "",
     education_note_images: [...(raw.education_note_images ?? [])].sort(
       (a, b) => a.sort_order - b.sort_order,
     ),
@@ -47,7 +51,8 @@ export function toEducationNoteFormData(note: EducationNote): EducationNoteFormD
   return {
     title: normalized.title,
     slug: normalized.slug ?? "",
-    content: normalized.content,
+    content_before_image: getEducationContentBefore(normalized),
+    content_after_image: getEducationContentAfter(normalized),
     source: normalized.source ?? "",
     nombre: normalized.nombre ?? "",
     images: ensureEducationImageFlags(
