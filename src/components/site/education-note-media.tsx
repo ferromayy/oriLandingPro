@@ -1,7 +1,6 @@
 import Image from "next/image";
 import {
   getFooterEducationImages,
-  getInlineEducationImage,
   getPrimaryEducationImage,
 } from "@/lib/education/helpers";
 import type { EducationNote } from "@/lib/education/types";
@@ -10,14 +9,17 @@ type Props = {
   note: EducationNote;
   title: string;
   titleAs?: "h1" | "h2";
+  /** En la nota completa la portada va aparte, en grande. */
+  showPrimaryThumbnail?: boolean;
 };
 
 export function EducationNoteTitleWithImage({
   note,
   title,
   titleAs: TitleTag = "h2",
+  showPrimaryThumbnail = true,
 }: Props) {
-  const primaryImage = getPrimaryEducationImage(note);
+  const primaryImage = showPrimaryThumbnail ? getPrimaryEducationImage(note) : null;
 
   return (
     <div
@@ -46,6 +48,27 @@ export function EducationNoteTitleWithImage({
         {title}
       </TitleTag>
     </div>
+  );
+}
+
+export function EducationNotePrimaryHero({ note }: { note: EducationNote }) {
+  const primaryImage = getPrimaryEducationImage(note);
+
+  if (!primaryImage) return null;
+
+  return (
+    <figure className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+      <div className="relative aspect-[16/9] w-full">
+        <Image
+          src={primaryImage.url}
+          alt=""
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 928px"
+          priority
+        />
+      </div>
+    </figure>
   );
 }
 

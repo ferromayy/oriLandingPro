@@ -4,15 +4,15 @@ import {
   getEducationContentAfter,
   getEducationContentBefore,
 } from "@/lib/education/content";
-import { getInlineEducationImage } from "@/lib/education/helpers";
+import { getInlineEducationImages } from "@/lib/education/helpers";
 import type { EducationNote } from "@/lib/education/types";
 
 export function EducationNoteBody({ note }: { note: EducationNote }) {
-  const inlineImage = getInlineEducationImage(note);
+  const inlineImages = getInlineEducationImages(note);
   const before = getEducationContentBefore(note);
   const after = getEducationContentAfter(note);
 
-  if (!inlineImage) {
+  if (inlineImages.length === 0) {
     return (
       <EducationNoteContent
         content={[before, after].filter(Boolean).join("\n\n")}
@@ -31,7 +31,9 @@ export function EducationNoteBody({ note }: { note: EducationNote }) {
           className="mt-6"
         />
       )}
-      <EducationNoteInlineImage url={inlineImage.url} />
+      {inlineImages.map((image) => (
+        <EducationNoteInlineImage key={image.id ?? image.url} url={image.url} />
+      ))}
       {after.trim() && <EducationNoteContent content={after} noteTitle={note.title} />}
     </>
   );

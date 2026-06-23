@@ -12,22 +12,63 @@ Documentación de las funcionalidades agregadas al proyecto que no estaban cubie
 - Flag en `src/lib/site/features.ts`: `EDUCATION_PUBLIC_ENABLED`. Si es `false`, las rutas devuelven 404 y el ítem desaparece del menú.
 - El contenido largo vive **solo en Educación**; los cafés tienen descripción corta en la ficha del producto.
 - **Layout:** ancho de lectura ampliado (`max-w-[58rem]`) en listado y detalle.
-- **Imágenes en el detalle:**
-  - La imagen **principal** (`is_primary`) se muestra junto al título.
-  - Las imágenes **secundarias** aparecen **al final** del artículo, después del texto y de nombre/fuente (si existen).
-  - Componentes: `EducationNoteTitleWithImage`, `EducationNoteGallery` en `src/components/site/education-note-media.tsx`.
+
+#### Contenido (Markdown)
+
+- El texto se escribe en **Markdown** (`react-markdown` + `remark-gfm` + `remark-breaks`).
+- En admin hay **dos campos de texto** para controlar dónde van las imágenes del medio:
+  - **Texto superior** (`content_before_image`) — arriba de las imágenes intercaladas.
+  - **Texto inferior** (`content_after_image`) — debajo de las imágenes intercaladas.
+- Al guardar también se persiste `content` (concatenación de ambos bloques) por compatibilidad.
+- `normalizeEducationMarkdown()` quita un `# título` duplicado si coincide con el título de la nota.
+- Componentes: `EducationContentEditor` (admin), `EducationNoteContent` (público).
+
+#### Imágenes — roles y límites
+
+| Rol | Columna DB | Cantidad | Dónde se ve |
+|-----|------------|----------|-------------|
+| **Principal** (portada) | `is_primary` | 0–1 (opcional) | Listado: miniatura junto al título. Detalle: hero grande debajo del título. |
+| **Al medio** | `is_inline` | **1–2** (obligatoria al menos 1) | Entre texto superior e inferior. |
+| **Al final** (galería) | (ninguna) | **2–4** (obligatorio al menos 2) | Debajo de nombre/fuente. |
+
+Máximo **7 imágenes** por nota (1 + 2 + 4). Constantes en `src/lib/education/types.ts`.
+
+#### Orden en el detalle (`/educacion/[slug]`)
+
+1. Título (`EducationNoteTitleWithImage`, sin miniatura en detalle).
+2. Portada grande (`EducationNotePrimaryHero`), si existe.
+3. Texto superior (`EducationNoteBody` → `EducationNoteContent`).
+4. Imagen(es) al medio (`EducationNoteInlineImage`, 1 o 2).
+5. Texto inferior.
+6. Nombre y fuente (si existen).
+7. Galería final (`EducationNoteGallery`).
+
+En el **listado**, la portada aparece como miniatura junto al título; el extracto usa el contenido completo (`getEducationExcerpt`).
+
+Componentes públicos: `src/components/site/education-note-media.tsx`, `education-note-body.tsx`.
 
 ### Admin
 
 - Rutas: `/admin/education`, `/admin/education/new`, `/admin/education/[id]/edit`.
-- CRUD de notas con título, slug, contenido, **fuente** (`source`), **nombre** (`nombre`), imágenes (máx. 3) y orden.
-- **Imagen principal:** botón “Hacer principal” en el formulario; una sola imagen marcada como `is_primary`.
+- CRUD con título, slug, **texto superior/inferior**, **fuente** (`source`), **nombre** (`nombre`), imágenes y orden.
+- **Editor de imágenes** (`EducationNoteImagesEditor`): tres zonas separadas — portada, medio (Medio 1 obligatorio, Medio 2 opcional), final (mín. 2).
+- Botón **«Hacer principal»** para promover otra imagen a portada.
 - **Upload:** acepta HEIC/HEIF; conversión a JPG con `sharp` (`src/lib/uploads/prepare-image.ts`).
-- **Guardado:** Server Actions (`src/lib/education/actions.ts`, `src/lib/uploads/actions.ts`) para evitar errores HTML/500 en Vercel.
+- **Validación** (`src/lib/education/schema.ts`):
+  - Al menos 1 imagen al medio, máximo 2.
+  - Al menos 2 imágenes al final, máximo 4.
+  - Texto superior obligatorio.
+  - Al menos un bloque de texto (superior o inferior).
+  - Una sola portada; una imagen no puede ser portada y del medio a la vez.
+- **Guardado:** Server Actions (`src/lib/education/actions.ts`, `src/lib/uploads/actions.ts`) para evitar errores HTML/500 en Vercel. Fallback legacy si faltan columnas nuevas en Supabase (`src/lib/education/admin.ts`).
 - **QR por nota** (`EducationNoteQr`): en la edición de cada nota se generan QR descargables para:
   - **Producción** — `NEXT_PUBLIC_SITE_URL` (ej. `https://www.oricafe.com.ar`)
   - **Vercel** — `NEXT_PUBLIC_VERCEL_SITE_URL` (si está configurada)
   - **Local** — `NEXT_PUBLIC_LOCAL_SITE_URL` (default `http://localhost:3000`)
+
+#### Notas existentes tras migración 021
+
+Si una nota tenía un solo campo `content`, al migrar todo queda en **texto superior**. Hay que mover manualmente al **texto inferior** la parte que va después de las imágenes del medio.
 
 ### Vínculo café ↔ educación
 
@@ -197,7 +238,9 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 | WhatsApp | `src/lib/site/whatsapp-order.ts` |
 | Carrito | `src/components/site/cart-context.tsx`, `cart-drawer.tsx` |
 | Educación | `src/lib/education/`, `src/app/(site)/educacion/`, `src/app/admin/(protected)/education/` |
-| Educación — media pública | `src/components/site/education-note-media.tsx` |
+| Educación — contenido | `src/lib/education/content.ts`, `markdown.ts`, `src/components/admin/education-content-editor.tsx` |
+| Educación — imágenes admin | `src/components/admin/education-note-images-editor.tsx` |
+| Educación — media pública | `src/components/site/education-note-media.tsx`, `education-note-body.tsx` |
 | QR educación | `src/components/admin/education-note-qr.tsx`, `src/lib/site/public-url.ts` |
 | Cafés — detalle público | `src/components/site/product-tech-tasting.tsx`, `extended-content-catch.tsx`, `product-purchase-panel.tsx` |
 | Cafés — admin | `src/lib/coffees/`, `src/components/admin/coffee-form.tsx` |
@@ -223,4 +266,4 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 
 ---
 
-*Última actualización: junio 2026 — educación (imágenes principal/secundarias, fuente/nombre, layout), edición de ítems en pedidos, ficha técnica arriba en detalle de café, texto personalizado del bloque “Seguí leyendo”, migraciones 015–019 y notas de desarrollo con Turbopack.*
+*Última actualización: junio 2026 — educación (dos bloques de texto, imágenes portada/medio/final, Markdown), edición de ítems en pedidos, ficha técnica en detalle de café, texto personalizado “Seguí leyendo”, migraciones 015–021 y notas de desarrollo con Turbopack.*

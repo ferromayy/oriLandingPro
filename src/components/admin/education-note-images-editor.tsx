@@ -8,8 +8,10 @@ import {
 } from "@/lib/education/helpers";
 import {
   MAX_EDUCATION_FOOTER_IMAGES,
+  MAX_EDUCATION_INLINE_IMAGES,
   MAX_EDUCATION_NOTE_IMAGES,
   MIN_EDUCATION_FOOTER_IMAGES,
+  MIN_EDUCATION_INLINE_IMAGES,
   type EducationNoteImageForm,
 } from "@/lib/education/types";
 import { uploadAdminImageAction } from "@/lib/uploads/actions";
@@ -32,9 +34,12 @@ function ImageSlot({
   disabled,
   uploading,
   isPrimary = false,
+  required = false,
   onAdd,
   onRemove,
   onMakePrimary,
+  canRemove = true,
+  canMakePrimary = true,
 }: {
   label: string;
   hint?: string;
@@ -42,9 +47,12 @@ function ImageSlot({
   disabled: boolean;
   uploading: boolean;
   isPrimary?: boolean;
+  required?: boolean;
   onAdd: () => void;
   onRemove: () => void;
   onMakePrimary?: () => void;
+  canRemove?: boolean;
+  canMakePrimary?: boolean;
 }) {
   return (
     <div
@@ -54,6 +62,7 @@ function ImageSlot({
     >
       <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
         {label}
+        {required && <span className="ml-1 text-red-500">*</span>}
         {isPrimary && (
           <span className="ml-1 normal-case text-zinc-600">· principal</span>
         )}
@@ -66,7 +75,7 @@ function ImageSlot({
             <Image src={image.url} alt={label} fill className="object-cover" sizes="240px" />
           </div>
           <div className="flex flex-wrap gap-2">
-            {onMakePrimary && !isPrimary && (
+            {onMakePrimary && canMakePrimary && !isPrimary && (
               <button
                 type="button"
                 onClick={onMakePrimary}
@@ -75,13 +84,15 @@ function ImageSlot({
                 Hacer principal
               </button>
             )}
-            <button
-              type="button"
-              onClick={onRemove}
-              className="rounded border border-red-200 px-2 py-1 text-xs text-red-700"
-            >
-              Quitar
-            </button>
+            {canRemove && (
+              <button
+                type="button"
+                onClick={onRemove}
+                className="rounded border border-red-200 px-2 py-1 text-xs text-red-700"
+              >
+                Quitar
+              </button>
+            )}
           </div>
         </>
       ) : (
@@ -111,22 +122,25 @@ export function EducationNoteImagesEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [pendingZone, setPendingZone] = useState<ImageZone | null>(null);
+  const [pendingInlineIndex, setPendingInlineIndex] = useState<number | null>(null);
   const [urlDraft, setUrlDraft] = useState("");
 
   const { primary, inline, footer } = partitionEducationImages(images);
   const totalCount = images.length;
   const canAddFooter = footer.length < MAX_EDUCATION_FOOTER_IMAGES;
+  const canAddSecondInline = inline.length >= 1 && inline.length < MAX_EDUCATION_INLINE_IMAGES;
 
   function commit(
     nextPrimary: EducationNoteImageForm | null,
-    nextInline: EducationNoteImageForm | null,
+    nextInline: EducationNoteImageForm[],
     nextFooter: EducationNoteImageForm[],
   ) {
     onChange(flattenEducationImages(nextPrimary, nextInline, nextFooter));
   }
 
-  function openPicker(zone: ImageZone) {
+  function openPicker(zone: ImageZone, inlineIndex?: number) {
     setPendingZone(zone);
+    setPendingInlineIndex(zone === "inline" ? (inlineIndex ?? inline.length) : null);
     fileInputRef.current?.click();
   }
 
@@ -158,7 +172,14 @@ export function EducationNoteImagesEditor({
       if (pendingZone === "primary") {
         commit(image, inline, footer);
       } else if (pendingZone === "inline") {
-        commit(primary, image, footer);
+        const index = pendingInlineIndex ?? inline.length;
+        if (index > 0 && !inline[0]) {
+          onUploadError("Subí primero la imagen del medio 1");
+          return;
+        }
+        const nextInline = [...inline];
+        nextInline[index] = { ...image, is_inline: true };
+        commit(primary, nextInline.filter(Boolean), footer);
       } else {
         commit(primary, inline, [...footer, image]);
       }
@@ -167,6 +188,7 @@ export function EducationNoteImagesEditor({
     } finally {
       setUploading(false);
       setPendingZone(null);
+      setPendingInlineIndex(null);
     }
   }
 
@@ -184,14 +206,14 @@ export function EducationNoteImagesEditor({
     const image: EducationNoteImageForm = {
       url,
       sort_order: 0,
-      is_primary: !primary,
+      is_primary: false,
       is_inline: false,
     };
 
     if (!primary) {
-      commit(image, inline, footer);
-    } else if (!inline) {
-      commit(primary, image, footer);
+      commit({ ...image, is_primary: true }, inline, footer);
+    } else if (inline.length < MAX_EDUCATION_INLINE_IMAGES) {
+      commit(primary, [...inline, { ...image, is_inline: true }], footer);
     } else if (canAddFooter) {
       commit(primary, inline, [...footer, { ...image, is_primary: false, is_inline: false }]);
     } else {
@@ -202,6 +224,15 @@ export function EducationNoteImagesEditor({
     setUrlDraft("");
   }
 
+  function removeInline(index: number) {
+    if (inline.length <= MIN_EDUCATION_INLINE_IMAGES) return;
+    commit(
+      primary,
+      inline.filter((_, itemIndex) => itemIndex !== index),
+      footer,
+    );
+  }
+
   function removeFooter(index: number) {
     commit(
       primary,
@@ -210,17 +241,26 @@ export function EducationNoteImagesEditor({
     );
   }
 
-  function makePrimaryFromInline() {
-    if (!inline) return;
+  function makePrimaryFromInline(index: number) {
+    const picked = inline[index];
+    if (!picked) return;
+
+    if (inline.length <= MIN_EDUCATION_INLINE_IMAGES && !primary) return;
+
     const newPrimary: EducationNoteImageForm = {
-      ...inline,
+      ...picked,
       is_primary: true,
       is_inline: false,
     };
-    const demotedInline = primary
-      ? { ...primary, is_primary: false, is_inline: true }
-      : null;
-    commit(newPrimary, demotedInline, footer);
+    const nextInline = [...inline];
+
+    if (primary) {
+      nextInline[index] = { ...primary, is_primary: false, is_inline: true };
+    } else {
+      nextInline.splice(index, 1);
+    }
+
+    commit(newPrimary, nextInline, footer);
   }
 
   function makePrimaryFromFooter(index: number) {
@@ -243,6 +283,10 @@ export function EducationNoteImagesEditor({
     commit(newPrimary, inline, nextFooter);
   }
 
+  const inlineCanMakePrimary = (index: number) =>
+    Boolean(inline[index]) &&
+    !(inline.length <= MIN_EDUCATION_INLINE_IMAGES && !primary);
+
   return (
     <div
       className={`space-y-6 ${hasError ? "rounded-lg ring-2 ring-red-300 ring-offset-2" : ""}`}
@@ -255,10 +299,15 @@ export function EducationNoteImagesEditor({
         onChange={handleFileUpload}
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <section className="space-y-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-4">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-800">Imagen principal</h3>
+          <p className="mt-1 text-xs text-zinc-500">
+            Opcional. Aparece destacada arriba de la nota y en el listado de Educación.
+          </p>
+        </div>
         <ImageSlot
-          label="Principal"
-          hint="Junto al título, arriba de la nota. También podés elegirla con «Hacer principal» en otra imagen."
+          label="Portada de la nota"
           image={primary}
           disabled={Boolean(primary)}
           uploading={uploading && pendingZone === "primary"}
@@ -266,17 +315,49 @@ export function EducationNoteImagesEditor({
           onAdd={() => openPicker("primary")}
           onRemove={() => commit(null, inline, footer)}
         />
-        <ImageSlot
-          label="Al medio del texto"
-          hint="Corta la nota a la mitad para que no sea tan larga."
-          image={inline}
-          disabled={Boolean(inline)}
-          uploading={uploading && pendingZone === "inline"}
-          onAdd={() => openPicker("inline")}
-          onRemove={() => commit(primary, null, footer)}
-          onMakePrimary={inline ? makePrimaryFromInline : undefined}
-        />
-      </div>
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-800">Al medio del texto</h3>
+          <p className="mt-1 text-xs text-zinc-500">
+            Obligatorio: mínimo {MIN_EDUCATION_INLINE_IMAGES}, máximo {MAX_EDUCATION_INLINE_IMAGES}.
+            Van entre el texto superior e inferior, en ese orden.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {Array.from({ length: MAX_EDUCATION_INLINE_IMAGES }, (_, index) => {
+            const image = inline[index] ?? null;
+            const isRequired = index === 0;
+
+            return (
+              <ImageSlot
+                key={`inline-${index}`}
+                label={`Medio ${index + 1}`}
+                hint={index === 1 ? "Opcional" : undefined}
+                image={image}
+                disabled={Boolean(image) || (index === 1 && !inline[0])}
+                uploading={
+                  uploading && pendingZone === "inline" && pendingInlineIndex === index
+                }
+                required={isRequired}
+                onAdd={() => openPicker("inline", index)}
+                onRemove={() => removeInline(index)}
+                onMakePrimary={
+                  image ? () => makePrimaryFromInline(index) : undefined
+                }
+                canRemove={!isRequired || inline.length > MIN_EDUCATION_INLINE_IMAGES}
+                canMakePrimary={inlineCanMakePrimary(index)}
+              />
+            );
+          })}
+        </div>
+        {!canAddSecondInline && inline.length === 0 && (
+          <p className="text-xs text-amber-700">
+            Subí al menos una imagen en «Medio 1» para poder publicar la nota.
+          </p>
+        )}
+      </section>
 
       <div className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
@@ -375,8 +456,8 @@ export function EducationNoteImagesEditor({
       )}
 
       <p className="text-xs text-zinc-500">
-        Acepta JPG, PNG, WebP y HEIC. Si usás imagen al medio, necesitás al menos{" "}
-        {MIN_EDUCATION_FOOTER_IMAGES} al final.
+        Acepta JPG, PNG, WebP y HEIC. Cada nota necesita al menos {MIN_EDUCATION_INLINE_IMAGES}{" "}
+        imagen al medio y {MIN_EDUCATION_FOOTER_IMAGES} al final.
       </p>
     </div>
   );

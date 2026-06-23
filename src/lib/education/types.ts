@@ -4,7 +4,8 @@ import { slugify } from "@/lib/coffees/types";
 import type { EducationNoteImageRow, EducationNoteRow } from "@/types/database";
 
 export const MAX_EDUCATION_PRIMARY_IMAGES = 1;
-export const MAX_EDUCATION_INLINE_IMAGES = 1;
+export const MIN_EDUCATION_INLINE_IMAGES = 1;
+export const MAX_EDUCATION_INLINE_IMAGES = 2;
 export const MAX_EDUCATION_FOOTER_IMAGES = 4;
 export const MIN_EDUCATION_FOOTER_IMAGES = 2;
 export const MAX_EDUCATION_NOTE_IMAGES =

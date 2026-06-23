@@ -1,8 +1,10 @@
 import { z } from "zod";
 import {
   MAX_EDUCATION_FOOTER_IMAGES,
+  MAX_EDUCATION_INLINE_IMAGES,
   MAX_EDUCATION_NOTE_IMAGES,
   MIN_EDUCATION_FOOTER_IMAGES,
+  MIN_EDUCATION_INLINE_IMAGES,
 } from "@/lib/education/types";
 
 const educationNoteImageSchema = z.object({
@@ -54,10 +56,18 @@ export const educationNoteFormSchema = z
       });
     }
 
-    if (inlineCount > 1) {
+    if (inlineCount < MIN_EDUCATION_INLINE_IMAGES) {
       ctx.addIssue({
         code: "custom",
-        message: "Solo puede haber una imagen al medio del texto",
+        message: `Necesitás al menos ${MIN_EDUCATION_INLINE_IMAGES} imagen al medio del texto`,
+        path: ["images"],
+      });
+    }
+
+    if (inlineCount > MAX_EDUCATION_INLINE_IMAGES) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Máximo ${MAX_EDUCATION_INLINE_IMAGES} imágenes al medio del texto`,
         path: ["images"],
       });
     }
@@ -78,10 +88,10 @@ export const educationNoteFormSchema = z
       });
     }
 
-    if (inlineCount > 0 && footerCount < MIN_EDUCATION_FOOTER_IMAGES) {
+    if (footerCount < MIN_EDUCATION_FOOTER_IMAGES) {
       ctx.addIssue({
         code: "custom",
-        message: `Con imagen al medio necesitás al menos ${MIN_EDUCATION_FOOTER_IMAGES} imágenes al final`,
+        message: `Necesitás al menos ${MIN_EDUCATION_FOOTER_IMAGES} imágenes al final`,
         path: ["images"],
       });
     }
@@ -98,10 +108,10 @@ export const educationNoteFormSchema = z
       });
     }
 
-    if (inlineCount > 0 && !data.content_before_image.trim()) {
+    if (!data.content_before_image.trim()) {
       ctx.addIssue({
         code: "custom",
-        message: "Con imagen al medio, la parte superior del texto es obligatoria",
+        message: "El texto superior es obligatorio (va arriba de las imágenes del medio)",
         path: ["content_before_image"],
       });
     }

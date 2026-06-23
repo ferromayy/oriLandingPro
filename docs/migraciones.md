@@ -25,6 +25,8 @@ Ejecutar en **Supabase → SQL Editor** del proyecto correspondiente (local o pr
 | 017 | `017_education_images_catch_up.sql` | **Catch-up idempotente** educación: tabla `education_note_images`, `source`, `nombre`, `is_primary` |
 | 018 | `018_education_note_image_primary.sql` | Imagen principal en notas; marca la primera existente como `is_primary` |
 | 019 | `019_coffee_extended_content_catch_text.sql` | Texto personalizado del bloque “Seguí leyendo” en cafés (`extended_content_catch_text`) |
+| 020 | `020_education_note_image_inline.sql` | Columna `is_inline` en imágenes de educación (imagen al medio del texto) |
+| 021 | `021_education_note_content_parts.sql` | Columnas `content_before_image` y `content_after_image`; migra `content` existente al bloque superior |
 
 ## Producción (Vercel)
 
@@ -55,6 +57,20 @@ Luego, si hace falta marcar imágenes principales en datos ya existentes:
 ```
 supabase/migrations/018_education_note_image_primary.sql
 ```
+
+Para imágenes **al medio del texto** (`is_inline`):
+
+```
+supabase/migrations/020_education_note_image_inline.sql
+```
+
+Para **dos bloques de contenido** (texto superior / inferior):
+
+```
+supabase/migrations/021_education_note_content_parts.sql
+```
+
+Tras la 021, el contenido viejo queda en `content_before_image`. Revisá cada nota en admin y mové al campo inferior lo que va después de las imágenes del medio.
 
 También podés ejecutar **015** y **016** por separado si solo faltan esos campos.
 

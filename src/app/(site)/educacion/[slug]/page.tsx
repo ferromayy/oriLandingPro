@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { EducationNoteBody } from "@/components/site/education-note-body";
 import {
   EducationNoteGallery,
+  EducationNotePrimaryHero,
   EducationNoteTitleWithImage,
 } from "@/components/site/education-note-media";
 import { getEducationNoteBySlug } from "@/lib/education/queries";
@@ -36,7 +37,10 @@ export default async function EducacionNotePage({ params }: Props) {
           note={note}
           title={note.title}
           titleAs="h1"
+          showPrimaryThumbnail={false}
         />
+
+        <EducationNotePrimaryHero note={note} />
 
         <EducationNoteBody note={note} />
 

@@ -220,8 +220,8 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
                 Imágenes (opcional)
               </h2>
               <p className="mt-1 text-xs text-zinc-500">
-                Organizá la nota con una imagen principal, otra al medio del texto y al menos
-                dos al final.
+                Portada opcional, al menos una imagen al medio (hasta dos) y al menos dos al
+                final.
               </p>
             </div>
 

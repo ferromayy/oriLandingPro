@@ -5,12 +5,19 @@ export function getPrimaryEducationImage(
   note: EducationNote,
 ): EducationNoteImageRow | null {
   const images = note.education_note_images ?? [];
-  return images.find((image) => image.is_primary) ?? images[0] ?? null;
+  return images.find((image) => image.is_primary) ?? null;
 }
 
-export function getInlineEducationImage(note: EducationNote): EducationNoteImageRow | null {
+export function getInlineEducationImages(note: EducationNote): EducationNoteImageRow[] {
   const images = note.education_note_images ?? [];
-  return images.find((image) => image.is_inline && !image.is_primary) ?? null;
+  return images
+    .filter((image) => image.is_inline && !image.is_primary)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+/** @deprecated Usar getInlineEducationImages */
+export function getInlineEducationImage(note: EducationNote): EducationNoteImageRow | null {
+  return getInlineEducationImages(note)[0] ?? null;
 }
 
 export function getFooterEducationImages(note: EducationNote): EducationNoteImageRow[] {
@@ -26,14 +33,16 @@ export function getSecondaryEducationImages(note: EducationNote): EducationNoteI
 
 export function partitionEducationImages(images: EducationNoteImageForm[]) {
   const primary = images.find((image) => image.is_primary) ?? null;
-  const inline = images.find((image) => image.is_inline && !image.is_primary) ?? null;
+  const inline = images
+    .filter((image) => image.is_inline && !image.is_primary)
+    .sort((a, b) => a.sort_order - b.sort_order);
   const footer = images.filter((image) => !image.is_primary && !image.is_inline);
   return { primary, inline, footer };
 }
 
 export function flattenEducationImages(
   primary: EducationNoteImageForm | null,
-  inline: EducationNoteImageForm | null,
+  inline: EducationNoteImageForm[],
   footer: EducationNoteImageForm[],
 ): EducationNoteImageForm[] {
   const merged: EducationNoteImageForm[] = [];
@@ -41,8 +50,8 @@ export function flattenEducationImages(
   if (primary) {
     merged.push({ ...primary, is_primary: true, is_inline: false });
   }
-  if (inline) {
-    merged.push({ ...inline, is_primary: false, is_inline: true });
+  for (const image of inline) {
+    merged.push({ ...image, is_primary: false, is_inline: true });
   }
   for (const image of footer) {
     merged.push({ ...image, is_primary: false, is_inline: false });
@@ -57,13 +66,10 @@ export function flattenEducationImages(
 export function ensureEducationImageFlags(
   images: EducationNoteImageForm[],
 ): EducationNoteImageForm[] {
-  if (images.length === 0) return images;
-
-  const hasPrimary = images.some((image) => image.is_primary);
-  return images.map((image, index) => ({
+  return images.map((image) => ({
     ...image,
-    is_primary: hasPrimary ? image.is_primary : index === 0,
-    is_inline: image.is_inline && !image.is_primary,
+    is_primary: Boolean(image.is_primary),
+    is_inline: Boolean(image.is_inline) && !image.is_primary,
   }));
 }
 
