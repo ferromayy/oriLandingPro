@@ -1,5 +1,4 @@
 import type { Coffee, CoffeeImage, CoffeeVariant } from "@/lib/coffees/types";
-import { COFFEE_SIZES_GRAMS } from "@/lib/coffees/types";
 
 const LAUNCH_TIMEZONE = "America/Argentina/Cordoba";
 
