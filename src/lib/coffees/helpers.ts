@@ -43,9 +43,9 @@ export function getVariant(
 }
 
 export function getAvailableVariants(coffee: Coffee): CoffeeVariant[] {
-  return COFFEE_SIZES_GRAMS.map(
-    (size) => getVariant(coffee, size),
-  ).filter((v): v is CoffeeVariant => Boolean(v?.is_available && v.price > 0));
+  return [...(coffee.coffee_variants ?? [])]
+    .filter((variant) => variant.is_available && variant.price > 0)
+    .sort((a, b) => a.size_grams - b.size_grams);
 }
 
 export function isCoffeeSoldOut(coffee: Coffee): boolean {

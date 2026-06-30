@@ -40,6 +40,7 @@ export type CoffeeFormData = {
   varietal: string;
   beneficio: string;
   altitude: string;
+  producer: string;
   images: CoffeeImageForm[];
   variants: CoffeeVariantForm[];
   is_active: boolean;
@@ -82,6 +83,7 @@ export function coffeeToFormData(coffee: Coffee): CoffeeFormData {
     varietal: coffee.varietal,
     beneficio: coffee.beneficio,
     altitude: coffee.altitude,
+    producer: coffee.producer ?? "",
     images: images.map((img) => ({
       url: img.url,
       sort_order: img.sort_order,

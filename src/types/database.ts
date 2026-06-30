@@ -1,4 +1,4 @@
-export const COFFEE_SIZES_GRAMS = [150, 250, 500, 1000] as const;
+export const COFFEE_SIZES_GRAMS = [150, 200, 250, 500, 1000] as const;
 export type CoffeeSizeGrams = (typeof COFFEE_SIZES_GRAMS)[number];
 
 export const MIN_COFFEE_IMAGES = 3;
@@ -26,6 +26,7 @@ export type CoffeeRow = {
   varietal: string;
   beneficio: string;
   altitude: string;
+  producer: string;
   is_active: boolean;
   sort_order: number;
   created_at: string;

@@ -39,9 +39,14 @@ export function hasTechSheet(coffee: {
   varietal: string;
   beneficio: string;
   altitude: string;
+  producer?: string;
 }): boolean {
   return Boolean(
-    coffee.origin || coffee.varietal || coffee.beneficio || coffee.altitude,
+    coffee.origin ||
+      coffee.varietal ||
+      coffee.beneficio ||
+      coffee.altitude ||
+      coffee.producer,
   );
 }
 

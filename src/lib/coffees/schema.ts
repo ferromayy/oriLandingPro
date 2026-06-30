@@ -51,6 +51,7 @@ export const coffeeFormSchema = z
     varietal: z.string().optional().default(""),
     beneficio: z.string().optional().default(""),
     altitude: z.string().optional().default(""),
+    producer: z.string().optional().default(""),
     images: z
       .array(imageSchema)
       .min(
@@ -62,7 +63,7 @@ export const coffeeFormSchema = z
       .array(variantSchema)
       .length(
         COFFEE_SIZES_GRAMS.length,
-        "Faltan tamaños: 150g, 250g, 500g o 1kg",
+        "Faltan tamaños: 150g, 200g, 250g, 500g o 1kg",
       ),
     is_active: z.coerce.boolean().optional().default(true),
     sort_order: z.coerce.number().int().optional().default(0),

@@ -23,6 +23,7 @@ function toCoffeePayload(data: CoffeeFormData): CoffeeInsert {
     varietal: data.varietal.trim(),
     beneficio: data.beneficio.trim(),
     altitude: data.altitude.trim(),
+    producer: data.producer.trim(),
     is_active: data.is_active,
     sort_order: data.sort_order,
   };

@@ -25,7 +25,7 @@ export default async function AdminCoffeesPage() {
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Cafés</h1>
           <p className="mt-1 text-sm text-zinc-600">
-            Galería de 3–6 fotos y precios por 150g, 250g, 500g y 1kg.
+            Galería de 3–6 fotos y precios por 150g, 200g, 250g, 500g y 1kg.
           </p>
         </div>
         <Link

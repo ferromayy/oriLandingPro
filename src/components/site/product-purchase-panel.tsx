@@ -9,7 +9,7 @@ import {
   type CoffeeSizeGrams,
 } from "@/lib/coffees/types";
 import { GRIND_OPTIONS, type GrindOption } from "@/lib/coffees/product-content";
-import { getPrimaryImage, getVariant, isCoffeeSoldOut } from "@/lib/coffees/helpers";
+import { getPrimaryImage, getAvailableVariants, getVariant, isCoffeeSoldOut } from "@/lib/coffees/helpers";
 import { useCart } from "@/components/site/cart-context";
 import { ProductTechAndTasting } from "@/components/site/product-tech-tasting";
 
@@ -19,10 +19,9 @@ export function ProductPurchasePanel({ coffee }: { coffee: Coffee }) {
 
   const availableSizes = useMemo(
     () =>
-      COFFEE_SIZES_GRAMS.filter((size) => {
-        const v = getVariant(coffee, size);
-        return v?.is_available && v.price > 0;
-      }),
+      getAvailableVariants(coffee).map(
+        (variant) => variant.size_grams as CoffeeSizeGrams,
+      ),
     [coffee],
   );
 

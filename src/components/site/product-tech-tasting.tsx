@@ -33,6 +33,12 @@ export function ProductTechAndTasting({ coffee }: { coffee: Coffee }) {
                 <br />
               </>
             )}
+            {coffee.producer && (
+              <>
+                Productor: {coffee.producer}
+                <br />
+              </>
+            )}
             {coffee.altitude && <>Altitud: {coffee.altitude}</>}
           </p>
         </div>

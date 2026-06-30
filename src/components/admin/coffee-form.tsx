@@ -55,6 +55,7 @@ const emptyForm: CoffeeFormData = {
   varietal: "",
   beneficio: "",
   altitude: "",
+  producer: "",
   images: [],
   variants: defaultVariants(),
   is_active: true,
@@ -590,6 +591,14 @@ export function CoffeeForm({
                 placeholder="2000 - 2100 msnm"
               />
             </Field>
+            <Field label="Productor">
+              <input
+                value={form.producer}
+                onChange={(e) => updateField("producer", e.target.value)}
+                className={inputClass(false)}
+                placeholder="Nombre del productor o finca"
+              />
+            </Field>
           </div>
         </section>
 
@@ -684,7 +693,7 @@ export function CoffeeForm({
               Tamaños y precios *
             </h2>
             <p className="mt-1 text-xs text-zinc-500">
-              150g, 250g, 500g y 1kg — precio en ARS y disponibilidad por tamaño. Si
+              150g, 200g, 250g, 500g y 1kg — precio en ARS y disponibilidad por tamaño. Si
               ningún tamaño tiene stock, el producto se muestra como{" "}
               <strong>Sold Out</strong> pero sigue visible en la landing.
             </p>
