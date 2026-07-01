@@ -27,6 +27,8 @@ Ejecutar en **Supabase → SQL Editor** del proyecto correspondiente (local o pr
 | 019 | `019_coffee_extended_content_catch_text.sql` | Texto personalizado del bloque “Seguí leyendo” en cafés (`extended_content_catch_text`) |
 | 020 | `020_education_note_image_inline.sql` | Columna `is_inline` en imágenes de educación (imagen al medio del texto) |
 | 021 | `021_education_note_content_parts.sql` | Columnas `content_before_image` y `content_after_image`; migra `content` existente al bloque superior |
+| 022 | `022_coffee_variant_200g.sql` | Variante de **200 g** en `coffee_variants`; crea fila 200g (precio 0, sin stock) en cafés existentes |
+| 023 | `023_coffee_producer.sql` | Campo opcional `producer` (productor) en ficha técnica de cafés |
 
 ## Producción (Vercel)
 
@@ -81,6 +83,22 @@ Para habilitar texto personalizado en el formulario de cafés:
 ```
 supabase/migrations/019_coffee_extended_content_catch_text.sql
 ```
+
+### Cafés — tamaños y ficha técnica
+
+Para el tamaño **200 g** (admin + checkout):
+
+```
+supabase/migrations/022_coffee_variant_200g.sql
+```
+
+Para el campo **productor** en la ficha técnica:
+
+```
+supabase/migrations/023_coffee_producer.sql
+```
+
+Después de la 022, configurá precio y stock de 200g en cada café desde `/admin/coffees`. Si el sitio en producción sigue mostrando sold out con stock solo en 200g, ejecutá la migración **y** hacé redeploy en Vercel.
 
 ### Schema cache
 

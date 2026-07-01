@@ -8,7 +8,7 @@ Landing y panel admin para [Orí Cafe](https://www.oricafe.com.ar/), con **Next.
 - **Educación** — notas en `/educacion` (Markdown, texto superior/inferior, imágenes portada/medio/final, fuente/nombre)
 - **Panel superadmin** (`/admin`) — cafés, pedidos (con edición de ítems) y educación
 - **Pedidos** — registro automático al checkout, códigos desde #1600, gestión en admin
-- **Supabase** — cafés, imágenes, variantes, notas de educación, pedidos (migraciones hasta **021**)
+- **Supabase** — cafés, imágenes, variantes (150g–1kg), notas de educación, pedidos (migraciones hasta **023**)
 
 ## Documentación
 
@@ -54,6 +54,8 @@ supabase/migrations/014_customer_orders_production_catch_up.sql   # pedidos
 supabase/migrations/017_education_images_catch_up.sql             # educación + imágenes
 supabase/migrations/020_education_note_image_inline.sql           # imagen al medio
 supabase/migrations/021_education_note_content_parts.sql          # texto superior/inferior
+supabase/migrations/022_coffee_variant_200g.sql                   # tamaño 200g
+supabase/migrations/023_coffee_producer.sql                       # productor (ficha técnica)
 supabase/migrations/019_coffee_extended_content_catch_text.sql    # texto “Seguí leyendo”
 ```
 
@@ -74,7 +76,7 @@ npm run dev
 | Ruta | Descripción |
 |------|-------------|
 | `/admin` | Dashboard |
-| `/admin/coffees` | Cafés (galería, variantes 150g–1kg, nota vinculada, texto “Seguí leyendo”) |
+| `/admin/coffees` | Cafés (galería, variantes 150g–1kg incl. 200g, ficha técnica con productor, nota vinculada) |
 | `/admin/orders` | Pedidos del carrito (editar ítems, finalizar, cancelar, eliminar) |
 | `/admin/education` | Notas de educación + QR |
 

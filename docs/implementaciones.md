@@ -86,19 +86,25 @@ Si una nota tenía un solo campo `content`, al migrar todo queda en **texto supe
 
 ### Variantes y tamaños
 
-- Tamaños disponibles: **150g, 250g, 500g y 1kg** (`010_coffee_variant_1kg.sql`).
-- Admin: galería de **3–6 fotos** (una principal) y precio/disponibilidad por tamaño.
+- Tamaños en admin y checkout: **150g, 200g, 250g, 500g y 1kg** (`010_coffee_variant_1kg.sql`, `022_coffee_variant_200g.sql`).
+- Constante: `COFFEE_SIZES_GRAMS` en `src/types/database.ts`.
+- Admin: galería de **3–6 fotos** (una principal) y precio/disponibilidad **por cada tamaño** en la tabla del formulario.
+- Al guardar, las variantes se sincronizan en `coffee_variants` (`src/lib/coffees/admin.ts`).
 
 ### Sold out y visibilidad
 
-- Un café puede estar **visible** aunque esté agotado (sold out).
-- En el sitio público, si está sold out **no se muestran precios** ni opción de compra.
-- En admin se muestra badge **Sold out**; no es obligatorio tener stock en todos los tamaños para publicar.
+- Un café puede estar **visible** (`is_active`) aunque esté agotado (sold out).
+- **Sold out** = ninguna variante con **precio > 0** y **En stock** activo (`isCoffeeSoldOut` en `src/lib/coffees/helpers.ts`).
+- El sitio público lee las variantes **tal como están en la base** (`getAvailableVariants`); no ignora tamaños aunque el deploy sea viejo.
+- Si está sold out: badge en grilla/detalle, sin precio visible ni botón de compra.
+- En admin: badge **Sold out** si aplica; no hace falta stock en todos los tamaños para publicar.
+- **Importante:** marcar solo «En stock» sin precio no alcanza; el formulario valida que cada tamaño en stock tenga precio > 0.
 
 ### Ficha técnica y notas de cata
 
-- Campos en admin: origen, varietal, beneficio, altitud, notas de cata.
+- Campos en admin: origen, varietal, beneficio, altitud, **productor** (opcional, migración `023_coffee_producer.sql`), notas de cata.
 - En el **detalle público** se muestran en la **columna derecha** (panel de compra), debajo del nombre/codename y **antes** de molienda y carrito (`ProductTechAndTasting` en `src/components/site/product-tech-tasting.tsx`).
+- Solo se renderizan los campos con texto; productor vacío no se muestra.
 - La descripción corta y el bloque “Seguí leyendo” siguen en la sección inferior (`ProductDetailContent`).
 
 ### Badge “Lanzamiento”
@@ -212,6 +218,7 @@ Si en Supabase falta la columna `order_code`, `createCustomerOrder` intenta un i
 - Proyecto de referencia: `ori-landing-pro-gutw` (`https://ori-landing-pro-gutw.vercel.app`).
 - El dominio `ori-landing-pro.vercel.app` puede dar 404 si apunta a otro proyecto; el dominio custom debe apuntar al proyecto correcto en Vercel.
 - **Importante:** las migraciones SQL deben ejecutarse en el **mismo proyecto Supabase** que usan las variables de Vercel.
+- Tras agregar tamaños o columnas nuevas (ej. 200g, `producer`), **redeploy** en Vercel para que admin y sitio público usen el código actualizado.
 - `next.config.ts` incluye `serverExternalPackages: ["sharp"]` y `serverActions.bodySizeLimit: "8mb"` para uploads de imágenes en admin.
 
 ### Desarrollo local (Turbopack)
@@ -266,4 +273,4 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 
 ---
 
-*Última actualización: junio 2026 — educación (dos bloques de texto, imágenes portada/medio/final, Markdown), edición de ítems en pedidos, ficha técnica en detalle de café, texto personalizado “Seguí leyendo”, migraciones 015–021 y notas de desarrollo con Turbopack.*
+*Última actualización: junio 2026 — cafés (200g, productor opcional, lógica sold out por variantes en DB), educación (texto superior/inferior, imágenes portada/medio/final), migraciones 015–023.*
