@@ -14,6 +14,7 @@ import { GRIND_OPTIONS, type GrindOption } from "@/lib/coffees/product-content";
 import { computeOrderTotal, withOrderItemQuantity } from "@/lib/orders/helpers";
 import {
   formatOrderItemDetails,
+  formatOrderItemPrice,
   formatOrderProductTitle,
 } from "@/lib/orders/display";
 import type { CustomerOrder, CustomerOrderItem } from "@/lib/orders/types";
@@ -214,7 +215,7 @@ export function OrderItemsEditor({ order, orderCode, coffees }: Props) {
                           </label>
 
                           <span className="text-xs font-medium text-zinc-700">
-                            Subtotal: {formatArsPrice(item.line_total)}
+                            {formatOrderItemPrice(item)}
                           </span>
 
                           <button

@@ -41,14 +41,22 @@ export function buildWhatsAppOrderMessage(
 
   const lines = items.map((item, index) => {
     const title = formatOrderProductTitle(item.codename, item.name);
-    const lineTotal = item.price * item.quantity;
+    const unitPrice = item.price;
+    const lineTotal = unitPrice * item.quantity;
+    const priceLines =
+      item.quantity > 1
+        ? [
+            `   - Precio pedido: ${formatArsPrice(unitPrice)} c/u`,
+            `   - Subtotal: ${formatArsPrice(lineTotal)}`,
+          ]
+        : [`   - Precio pedido: ${formatArsPrice(unitPrice)}`];
 
     return [
       `${index + 1}. ${title}`,
       `   - Tamaño: ${formatOrderSize(item.sizeGrams)}`,
       `   - Molienda: ${formatOrderGrind(item.grind)}`,
       `   - Cantidad: ${item.quantity}`,
-      `   - Precio: ${formatArsPrice(lineTotal)}`,
+      ...priceLines,
     ].join("\n");
   });
 

@@ -1,5 +1,9 @@
 import { formatArsPrice } from "@/lib/coffees/types";
 import type { CoffeeSizeGrams } from "@/types/database";
+import {
+  getOrderItemLineTotal,
+  getOrderItemUnitPrice,
+} from "@/lib/orders/helpers";
 import type { CustomerOrder, CustomerOrderItem } from "@/lib/orders/types";
 import { formatOrderCode } from "@/lib/orders/types";
 
@@ -25,12 +29,23 @@ function formatGrind(grind: string): string {
   return grind;
 }
 
+export function formatOrderItemPrice(item: CustomerOrderItem): string {
+  const unitPrice = getOrderItemUnitPrice(item);
+  const lineTotal = getOrderItemLineTotal(item);
+
+  if (item.quantity > 1) {
+    return `Precio pedido: ${formatArsPrice(unitPrice)} c/u · Subtotal: ${formatArsPrice(lineTotal)}`;
+  }
+
+  return `Precio pedido: ${formatArsPrice(unitPrice)}`;
+}
+
 export function formatOrderItemDetails(item: CustomerOrderItem): string {
   return [
     `Tamaño: ${formatOrderSize(item.size_grams)}`,
     `Molienda: ${formatGrind(item.grind)}`,
     `Cantidad: ${item.quantity}`,
-    `Precio: ${formatArsPrice(item.line_total)}`,
+    formatOrderItemPrice(item),
   ].join(" · ");
 }
 
