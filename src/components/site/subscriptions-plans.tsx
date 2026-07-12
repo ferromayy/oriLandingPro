@@ -14,6 +14,11 @@ export type SubscriptionPlan = {
   description: string;
   /** Acento de paleta Orí (solo detalle visual). */
   accent: string;
+  details: {
+    about: string;
+    includes: string[];
+    bestFor: string;
+  };
 };
 
 type Props = {
@@ -30,36 +35,50 @@ function buildSubscriptionMessage(planName: string): string {
 }
 
 export function SubscriptionsPlans({ plans }: Props) {
-  const [selectedId, setSelectedId] = useState(plans[0]?.id ?? "");
-  const selected = plans.find((plan) => plan.id === selectedId) ?? plans[0];
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = plans.find((plan) => plan.id === selectedId) ?? null;
 
   const whatsappHref = selected
     ? buildWhatsAppCheckoutUrl(buildSubscriptionMessage(selected.name))
     : `https://wa.me/${WHATSAPP_ORDER_NUMBER}`;
 
+  function handleSelect(planId: string) {
+    setSelectedId((current) => (current === planId ? null : planId));
+  }
+
   return (
     <div className="space-y-10">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {plans.map((plan) => {
+        {plans.map((plan, index) => {
           const active = plan.id === selected?.id;
           return (
             <button
               key={plan.id}
               type="button"
-              onClick={() => setSelectedId(plan.id)}
-              className={`relative flex h-full flex-col overflow-hidden border bg-white p-6 pt-7 text-left transition ${
+              onClick={() => handleSelect(plan.id)}
+              aria-expanded={active}
+              aria-controls="plan-detail"
+              style={{ animationDelay: `${index * 80}ms` }}
+              className={`ori-plan-enter group relative flex h-full flex-col overflow-hidden border bg-white p-6 pt-7 text-left transition duration-300 ease-out ${
                 active
                   ? "border-gray-900 ring-1 ring-gray-900"
-                  : "border-gray-200 hover:border-gray-400"
+                  : "border-gray-200 hover:-translate-y-0.5 hover:border-gray-400 hover:shadow-sm"
               }`}
             >
               <span
-                className="absolute inset-x-0 top-0 h-1"
-                style={{ backgroundColor: plan.accent }}
+                className="absolute inset-x-0 top-0 h-1 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"
+                style={{
+                  backgroundColor: plan.accent,
+                  transform: active ? "scaleX(1)" : undefined,
+                }}
                 aria-hidden
               />
               <span
-                className="pointer-events-none absolute right-4 top-8 h-9 w-9 rounded-full"
+                className={`pointer-events-none absolute right-4 top-8 h-9 w-9 rounded-full transition duration-300 ease-out ${
+                  active
+                    ? "scale-125"
+                    : "scale-100 group-hover:scale-[1.35]"
+                }`}
                 style={{ backgroundColor: plan.accent }}
                 aria-hidden
               />
@@ -70,7 +89,9 @@ export function SubscriptionsPlans({ plans }: Props) {
                 {plan.name}
               </h3>
               <span
-                className="mt-4 block h-0.5 w-10"
+                className={`mt-4 block h-0.5 w-10 transition-colors duration-300 ${
+                  active ? "ori-plan-rule-active" : ""
+                }`}
                 style={{
                   backgroundColor: active ? plan.accent : "#d1d5db",
                 }}
@@ -83,13 +104,13 @@ export function SubscriptionsPlans({ plans }: Props) {
                 {plan.description}
               </p>
               <span
-                className={`mt-6 text-xs font-medium uppercase tracking-widest ${
+                className={`mt-6 text-xs font-medium uppercase tracking-widest transition-colors duration-300 ${
                   active
                     ? "text-gray-900 underline underline-offset-4"
-                    : "text-gray-500"
+                    : "text-gray-500 group-hover:text-gray-800"
                 }`}
               >
-                {active ? "Seleccionado" : "Elegir"}
+                {active ? "Ver menos" : "Saber más"}
               </span>
             </button>
           );
@@ -97,27 +118,74 @@ export function SubscriptionsPlans({ plans }: Props) {
       </div>
 
       {selected && (
-        <div className="relative flex flex-col items-start justify-between gap-6 overflow-hidden border border-gray-200 bg-gray-50 px-6 py-6 sm:flex-row sm:items-center sm:px-8">
+        <div
+          id="plan-detail"
+          key={selected.id}
+          className="ori-plan-panel-enter relative overflow-hidden border border-gray-200 bg-gray-50"
+        >
           <span
             className="absolute inset-y-0 left-0 w-1"
             style={{ backgroundColor: selected.accent }}
             aria-hidden
           />
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
-              Tu plan
-            </p>
-            <p className="mt-2 text-lg font-medium text-gray-900">{selected.name}</p>
-            <p className="mt-1 max-w-xl text-sm text-gray-600">{selected.tagline}</p>
+
+          <div className="px-6 py-8 sm:px-10 sm:py-10">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
+              <div className="max-w-2xl">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
+                  Sobre este plan
+                </p>
+                <h3 className="mt-3 text-2xl font-medium tracking-tight text-gray-900">
+                  {selected.name}
+                </h3>
+                <p className="mt-2 text-sm font-medium text-gray-700">
+                  {selected.tagline}
+                </p>
+                <p className="mt-5 text-sm leading-relaxed text-gray-600 md:text-base">
+                  {selected.details.about}
+                </p>
+                <p className="mt-6 text-sm leading-relaxed text-gray-600">
+                  <span className="font-medium text-gray-900">Ideal para: </span>
+                  {selected.details.bestFor}
+                </p>
+              </div>
+
+              <div className="w-full shrink-0 lg:max-w-xs">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
+                  Qué incluye
+                </p>
+                <ul className="mt-4 space-y-3 border-t border-gray-200 pt-4">
+                  {selected.details.includes.map((item) => (
+                    <li
+                      key={item}
+                      className="flex gap-3 text-sm leading-relaxed text-gray-700"
+                    >
+                      <span
+                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: selected.accent }}
+                        aria-hidden
+                      />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row sm:items-center">
+              <p className="text-sm text-gray-600">
+                Te acompañamos por WhatsApp con cantidad, molienda y frecuencia.
+              </p>
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 shrink-0 items-center justify-center bg-gray-900 px-8 text-xs font-medium uppercase tracking-widest text-white transition duration-300 hover:bg-black"
+              >
+                Iniciar suscripción
+              </a>
+            </div>
           </div>
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-12 shrink-0 items-center justify-center bg-gray-900 px-8 text-xs font-medium uppercase tracking-widest text-white transition hover:bg-black"
-          >
-            Iniciar suscripción
-          </a>
         </div>
       )}
     </div>

@@ -27,8 +27,104 @@
   }
 }
 
+@keyframes ori-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ori-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ori-rule-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 .animate-scroll {
   animation: scroll 30s linear infinite;
+}
+
+.ori-plan-enter {
+  animation: ori-fade-up 0.55s ease-out both;
+}
+
+.ori-plan-panel-enter {
+  animation: ori-fade-in 0.35s ease-out both;
+}
+
+.ori-plan-rule-active {
+  transform-origin: left center;
+  animation: ori-rule-grow 0.35s ease-out both;
+}
+
+/* Navbar letter wave — todos los links */
+.ori-nav-item {
+  display: inline-flex;
+  color: #111827;
+}
+
+.ori-nav-letters {
+  display: inline-flex;
+}
+
+.ori-nav-letter {
+  display: inline-block;
+  color: #111827;
+  transform: translateY(0);
+  transition: transform 0.15s ease;
+  transition-delay: 0ms;
+}
+
+.ori-nav-letter-space {
+  display: inline-block;
+  width: 0.35em;
+}
+
+.ori-nav-item:hover .ori-nav-letter,
+.ori-nav-item:focus-visible .ori-nav-letter {
+  transform: translateY(-5px);
+  transition-delay: var(--ori-d, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ori-plan-enter,
+  .ori-plan-panel-enter,
+  .ori-plan-rule-active {
+    animation: none;
+  }
+
+  .ori-nav-item:hover .ori-nav-letter,
+  .ori-nav-item:focus-visible .ori-nav-letter {
+    transform: none;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 body {

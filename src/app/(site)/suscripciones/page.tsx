@@ -20,6 +20,18 @@ const plans: SubscriptionPlan[] = [
     description:
       "Pensado para quienes quieren tener siempre café fresco en casa y olvidarse de volver a comprar cada mes.",
     accent: "rgba(232, 119, 34, 0.92)",
+    details: {
+      about:
+        "Recibís cafés de nuestra línea estable: perfiles equilibrados, fáciles de preparar y pensados para acompañar tu ritual diario sin complicaciones. Cada mes llega café fresco tostado en Córdoba, listo para moler o ya molido según tu preferencia.",
+      includes: [
+        "Café de especialidad de la línea Casa",
+        "Envío mensual con café recién tostado",
+        "Elección de grano o molienda",
+        "Precio preferencial de suscriptor",
+      ],
+      bestFor:
+        "casas y personas que toman café todos los días y quieren calidad constante sin tener que acordarse de pedir.",
+    },
   },
   {
     id: "reserva",
@@ -28,6 +40,18 @@ const plans: SubscriptionPlan[] = [
     tagline: "Ediciones limitadas, microlotes y cafés más exclusivos.",
     description: "Una experiencia diferente en cada envío.",
     accent: "rgba(227, 6, 19, 0.92)",
+    details: {
+      about:
+        "Cada mes te llega un café distinto: microlotes, orígenes rotativos y ediciones limitadas seleccionadas por el equipo de Orí. Es la forma de explorar perfiles más expresivos y conocer lo que no siempre está en el catálogo.",
+      includes: [
+        "Café de edición limitada o microlote",
+        "Rotación de orígenes y procesos",
+        "Ficha sensorial del café del mes",
+        "Prioridad de stock en lotes exclusivos",
+      ],
+      bestFor:
+        "quienes disfrutan descubrir notas nuevas, comparar orígenes y vivir el café como una experiencia, no solo como una rutina.",
+    },
   },
   {
     id: "mix",
@@ -37,6 +61,18 @@ const plans: SubscriptionPlan[] = [
     description:
       "Un café de nuestra línea estable y otro de edición limitada en cada envío.",
     accent: "rgba(196, 176, 140, 0.92)",
+    details: {
+      about:
+        "Combinás la seguridad de un café cotidiano con la sorpresa de una edición limitada. En cada envío recibís un café de la línea estable para el día a día y otro más exclusivo para explorar cuando quieras algo distinto.",
+      includes: [
+        "Un café de la línea Casa",
+        "Un café Reserva / edición limitada",
+        "Variedad sin perder la rutina",
+        "Flexibilidad de molienda en ambos",
+      ],
+      bestFor:
+        "parejas, hogares compartidos o cualquiera que quiera un café confiable y, a la vez, algo especial para probar.",
+    },
   },
   {
     id: "oficina",
@@ -46,6 +82,18 @@ const plans: SubscriptionPlan[] = [
     description:
       "Entregas programadas y beneficios exclusivos para empresas.",
     accent: "rgba(0, 87, 184, 0.92)",
+    details: {
+      about:
+        "Armamos una entrega pensada para el consumo de tu equipo: cantidad, frecuencia y perfil de café según cuántas personas sean y cómo preparan. Menos logística para vos, mejor café en la oficina todos los días.",
+      includes: [
+        "Volúmenes adaptados al tamaño del equipo",
+        "Entregas programadas a la oficina",
+        "Asesoramiento de perfil y método",
+        "Condiciones especiales para empresas",
+      ],
+      bestFor:
+        "estudios, oficinas y equipos que quieren elevar el café del día a día sin gestionar compras sueltas cada semana.",
+    },
   },
 ];
 
