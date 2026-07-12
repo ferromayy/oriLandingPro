@@ -8,6 +8,11 @@
   --color-dark-accent: #222222;
   --color-whatsapp: #25d366;
   --color-whatsapp-dark: #128c7e;
+  /* Paleta primaria Orí (identidad de marca) */
+  --color-ori-terracotta: #e87722;
+  --color-ori-cream: #f5f0e8;
+  --color-ori-red: #e30613;
+  --color-ori-blue: #0057b8;
   --font-sans: var(--font-inter);
   --font-mono: var(--font-space-mono);
   --radius-default: 4px;

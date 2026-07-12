@@ -8,6 +8,11 @@ export function SiteFooter() {
           </h3>
           <ul className="space-y-2 text-sm text-gray-600">
             <li>
+              <a href="/suscripciones" className="hover:text-gray-900">
+                Suscripciones
+              </a>
+            </li>
+            <li>
               <a href="/mayoristas" className="hover:text-gray-900">
                 Mayoristas y asesoramiento
               </a>

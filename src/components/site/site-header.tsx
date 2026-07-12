@@ -12,6 +12,7 @@ const navLinks = [
   ...(EDUCATION_PUBLIC_ENABLED
     ? [{ href: "/educacion", label: "Educación" as const }]
     : []),
+  { href: "/suscripciones", label: "Suscripciones" },
   { href: "/mayoristas", label: "Mayoristas y asesoramiento" },
   { href: "/nosotros", label: "Nosotros" },
 ];
