@@ -19,7 +19,7 @@ const plans: SubscriptionPlan[] = [
     tagline: "El café de especialidad para todos los días.",
     description:
       "Pensado para quienes quieren tener siempre café fresco en casa y olvidarse de volver a comprar cada mes.",
-    accent: "rgba(232, 119, 34, 0.8)",
+    accent: "rgba(232, 119, 34, 0.92)",
   },
   {
     id: "reserva",
@@ -27,7 +27,7 @@ const plans: SubscriptionPlan[] = [
     audience: "Para descubrir",
     tagline: "Ediciones limitadas, microlotes y cafés más exclusivos.",
     description: "Una experiencia diferente en cada envío.",
-    accent: "rgba(227, 6, 19, 0.8)",
+    accent: "rgba(227, 6, 19, 0.92)",
   },
   {
     id: "mix",
@@ -36,7 +36,7 @@ const plans: SubscriptionPlan[] = [
     tagline: "Lo mejor de los dos mundos.",
     description:
       "Un café de nuestra línea estable y otro de edición limitada en cada envío.",
-    accent: "rgba(212, 196, 168, 0.8)",
+    accent: "rgba(196, 176, 140, 0.92)",
   },
   {
     id: "oficina",
@@ -45,7 +45,7 @@ const plans: SubscriptionPlan[] = [
     tagline: "Café de especialidad para tu equipo.",
     description:
       "Entregas programadas y beneficios exclusivos para empresas.",
-    accent: "rgba(0, 87, 184, 0.8)",
+    accent: "rgba(0, 87, 184, 0.92)",
   },
 ];
 
