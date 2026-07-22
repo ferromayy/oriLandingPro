@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import {
   SubscriptionsPlans,
   type SubscriptionPlan,
 } from "@/components/site/subscriptions-plans";
-import { SUBSCRIPTIONS_PUBLIC_ENABLED } from "@/lib/site/features";
+import {
+  SUBSCRIPTIONS_JOIN_URL,
+  SUBSCRIPTIONS_PUBLIC_ENABLED,
+} from "@/lib/site/features";
 import { buildWhatsAppCheckoutUrl } from "@/lib/site/whatsapp-order";
 
 export const metadata: Metadata = {
@@ -149,7 +152,7 @@ const generalWhatsAppHref = buildWhatsAppCheckoutUrl(
 );
 
 export default function SuscripcionesPage() {
-  if (!SUBSCRIPTIONS_PUBLIC_ENABLED) notFound();
+  if (!SUBSCRIPTIONS_PUBLIC_ENABLED) redirect(SUBSCRIPTIONS_JOIN_URL);
 
   return (
     <main className="flex w-full flex-1 flex-col">
