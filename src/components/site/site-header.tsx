@@ -4,7 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import { useCart } from "@/components/site/cart-context";
-import { EDUCATION_PUBLIC_ENABLED } from "@/lib/site/features";
+import {
+  EDUCATION_PUBLIC_ENABLED,
+  SUBSCRIPTIONS_JOIN_URL,
+} from "@/lib/site/features";
 
 const navLinks = [
   { href: "/", label: "Inicio" },
@@ -12,7 +15,7 @@ const navLinks = [
   ...(EDUCATION_PUBLIC_ENABLED
     ? [{ href: "/educacion", label: "Educación" as const }]
     : []),
-  { href: "/suscripciones", label: "Suscripciones" },
+  { href: SUBSCRIPTIONS_JOIN_URL, label: "Suscripciones" },
   { href: "/mayoristas", label: "Mayoristas y asesoramiento" },
   { href: "/nosotros", label: "Nosotros" },
 ];
@@ -54,11 +57,29 @@ function NavItem({
   label: string;
   onClick?: () => void;
 }) {
+  const isExternal = href.startsWith("http");
+  const className = "ori-nav-item text-xs font-medium tracking-widest";
+
+  if (isExternal) {
+    return (
+      <a
+        href={href}
+        onClick={onClick}
+        className={className}
+        aria-label={label}
+        rel="noopener noreferrer"
+      >
+        <span className="sr-only">{label}</span>
+        <AnimatedNavLabel label={label} />
+      </a>
+    );
+  }
+
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="ori-nav-item text-xs font-medium tracking-widest"
+      className={className}
       aria-label={label}
     >
       <span className="sr-only">{label}</span>

@@ -1,3 +1,5 @@
+import { SUBSCRIPTIONS_JOIN_URL } from "@/lib/site/features";
+
 export function SiteFooter() {
   return (
     <footer className="mt-16 bg-gray-50 py-12">
@@ -8,7 +10,11 @@ export function SiteFooter() {
           </h3>
           <ul className="space-y-2 text-sm text-gray-600">
             <li>
-              <a href="/suscripciones" className="hover:text-gray-900">
+              <a
+                href={SUBSCRIPTIONS_JOIN_URL}
+                className="hover:text-gray-900"
+                rel="noopener noreferrer"
+              >
                 Suscripciones
               </a>
             </li>

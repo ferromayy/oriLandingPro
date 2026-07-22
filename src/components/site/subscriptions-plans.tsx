@@ -58,23 +58,18 @@ export function SubscriptionsPlans({ plans }: Props) {
               onClick={() => handleSelect(plan.id)}
               aria-expanded={active}
               aria-controls="plan-detail"
-              style={{ animationDelay: `${index * 80}ms` }}
-              className={`ori-plan-enter group relative flex h-full flex-col overflow-hidden border bg-white p-6 pt-7 text-left transition duration-300 ease-out ${
+              style={{
+                animationDelay: `${index * 80}ms`,
+                borderColor: active ? plan.accent : undefined,
+              }}
+              className={`ori-plan-enter group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] rounded-tr-[3.5rem] border bg-white p-7 pt-8 text-left shadow-[0_1px_3px_rgba(17,24,39,0.05)] transition duration-300 ease-out ${
                 active
-                  ? "border-gray-900 ring-1 ring-gray-900"
-                  : "border-gray-200 hover:-translate-y-0.5 hover:border-gray-400 hover:shadow-sm"
+                  ? "shadow-[0_14px_34px_-18px_rgba(17,24,39,0.28)]"
+                  : "border-gray-200/80 hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_14px_34px_-20px_rgba(17,24,39,0.25)]"
               }`}
             >
               <span
-                className="absolute inset-x-0 top-0 h-1 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"
-                style={{
-                  backgroundColor: plan.accent,
-                  transform: active ? "scaleX(1)" : undefined,
-                }}
-                aria-hidden
-              />
-              <span
-                className={`pointer-events-none absolute right-4 top-8 h-9 w-9 rounded-full transition duration-300 ease-out ${
+                className={`pointer-events-none absolute right-5 top-5 h-9 w-9 rounded-full transition duration-300 ease-out ${
                   active
                     ? "scale-125"
                     : "scale-100 group-hover:scale-[1.35]"
@@ -89,7 +84,7 @@ export function SubscriptionsPlans({ plans }: Props) {
                 {plan.name}
               </h3>
               <span
-                className={`mt-4 block h-0.5 w-10 transition-colors duration-300 ${
+                className={`mt-4 block h-0.5 w-10 rounded-full transition-colors duration-300 ${
                   active ? "ori-plan-rule-active" : ""
                 }`}
                 style={{
@@ -121,10 +116,10 @@ export function SubscriptionsPlans({ plans }: Props) {
         <div
           id="plan-detail"
           key={selected.id}
-          className="ori-plan-panel-enter relative overflow-hidden border border-gray-200 bg-gray-50"
+          className="ori-plan-panel-enter relative overflow-hidden rounded-[1.75rem] rounded-bl-[3.5rem] border border-gray-200/80 bg-gray-50"
         >
           <span
-            className="absolute inset-y-0 left-0 w-1"
+            className="absolute inset-y-6 left-0 w-1 rounded-full"
             style={{ backgroundColor: selected.accent }}
             aria-hidden
           />
@@ -180,7 +175,7 @@ export function SubscriptionsPlans({ plans }: Props) {
                 href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 shrink-0 items-center justify-center bg-gray-900 px-8 text-xs font-medium uppercase tracking-widest text-white transition duration-300 hover:bg-black"
+                className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-gray-900 px-9 text-xs font-medium uppercase tracking-widest text-white transition duration-300 hover:bg-black"
               >
                 Iniciar suscripción
               </a>

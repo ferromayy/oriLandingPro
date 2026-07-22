@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import {
   SubscriptionsPlans,
   type SubscriptionPlan,
 } from "@/components/site/subscriptions-plans";
+import { SUBSCRIPTIONS_PUBLIC_ENABLED } from "@/lib/site/features";
 import { buildWhatsAppCheckoutUrl } from "@/lib/site/whatsapp-order";
 
 export const metadata: Metadata = {
@@ -147,6 +149,8 @@ const generalWhatsAppHref = buildWhatsAppCheckoutUrl(
 );
 
 export default function SuscripcionesPage() {
+  if (!SUBSCRIPTIONS_PUBLIC_ENABLED) notFound();
+
   return (
     <main className="flex w-full flex-1 flex-col">
       <section className="relative overflow-hidden bg-white px-4 pb-16 pt-12 sm:px-10 md:pb-24 md:pt-16">
