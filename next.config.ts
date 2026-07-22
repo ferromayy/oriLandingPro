@@ -24,6 +24,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    // En producción, la ruta vieja manda a la app de suscripciones.
+    // En local se deja la página para poder previsualizarla.
+    if (process.env.NODE_ENV === "development") return [];
+    return [
+      {
+        source: "/suscripciones",
+        destination: "https://suscripciones.oricafe.com.ar/app/ori/join",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
