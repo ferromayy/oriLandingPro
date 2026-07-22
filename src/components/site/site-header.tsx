@@ -123,9 +123,9 @@ export function SiteHeader() {
             <Image
               src="/images/brand/logo.png"
               alt="Orí Cafe"
-              width={120}
-              height={48}
-              className="h-10 w-auto object-contain"
+              width={168}
+              height={68}
+              className="h-14 w-auto object-contain"
               priority
             />
           </Link>
