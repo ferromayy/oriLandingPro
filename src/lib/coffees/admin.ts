@@ -26,6 +26,7 @@ function toCoffeePayload(data: CoffeeFormData): CoffeeInsert {
     producer: data.producer.trim(),
     is_active: data.is_active,
     sort_order: data.sort_order,
+    stock_quantity: Math.max(0, Math.floor(data.stock_quantity ?? 0)),
   };
 }
 

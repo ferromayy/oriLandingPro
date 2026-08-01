@@ -40,3 +40,36 @@ export function withOrderItemQuantity(
     line_total: unitPrice * safeQuantity,
   };
 }
+
+/** Clave estable para fusionar líneas iguales en la comanda (café + tamaño + molienda). */
+export function getOrderTicketLineKey(
+  item: Pick<CustomerOrderItem, "coffee_id" | "size_grams" | "grind">,
+): string {
+  return `${item.coffee_id}-${item.size_grams}-${item.grind}`;
+}
+
+/**
+ * Agrega un ítem a la comanda. Si ya existe la misma combinación,
+ * suma cantidades y recalcula el subtotal.
+ */
+export function addItemToOrderTicket(
+  lines: CustomerOrderItem[],
+  incoming: CustomerOrderItem,
+): CustomerOrderItem[] {
+  const key = getOrderTicketLineKey(incoming);
+  const existingIndex = lines.findIndex(
+    (line) => getOrderTicketLineKey(line) === key,
+  );
+
+  if (existingIndex === -1) {
+    return [
+      ...lines,
+      withOrderItemQuantity(incoming, Math.max(1, Math.floor(incoming.quantity))),
+    ];
+  }
+
+  return lines.map((line, index) => {
+    if (index !== existingIndex) return line;
+    return withOrderItemQuantity(line, line.quantity + incoming.quantity);
+  });
+}

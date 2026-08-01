@@ -29,6 +29,8 @@ export type CoffeeRow = {
   producer: string;
   is_active: boolean;
   sort_order: number;
+  /** Stock interno para operarios; no afecta la web pública. */
+  stock_quantity: number;
   created_at: string;
   updated_at: string;
 };
@@ -99,12 +101,14 @@ export type EducationNoteImageRow = {
 };
 
 export type CustomerOrderStatus = "pending" | "completed" | "cancelled";
+export type CustomerOrderSource = "whatsapp" | "staff";
 
 export type CustomerOrderRow = {
   id: string;
   order_number: number;
   order_code: number;
   status: CustomerOrderStatus;
+  source: CustomerOrderSource;
   items: Json;
   total: number;
   whatsapp_message: string;
@@ -118,6 +122,7 @@ export type CustomerOrderInsert = {
   total: number;
   whatsapp_message: string;
   status?: CustomerOrderStatus;
+  source?: CustomerOrderSource;
   id?: string;
   created_at?: string;
 };

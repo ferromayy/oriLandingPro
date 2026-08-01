@@ -60,6 +60,7 @@ const emptyForm: CoffeeFormData = {
   variants: defaultVariants(),
   is_active: true,
   sort_order: 0,
+  stock_quantity: 0,
 };
 
 const SECTION_IDS: Record<FormSection, string> = {
@@ -402,6 +403,26 @@ export function CoffeeForm({
               />
             </Field>
           </div>
+
+          <Field
+            label="Cantidad en stock (interno)"
+            error={fieldHasError(issues, "stock_quantity")}
+          >
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={form.stock_quantity}
+              onChange={(e) =>
+                updateField("stock_quantity", Math.max(0, Number(e.target.value) || 0))
+              }
+              className={inputClass(fieldHasError(issues, "stock_quantity"))}
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              Solo para el equipo Orí al tomar pedidos. No oculta ni marca sold out
+              en la web pública.
+            </p>
+          </Field>
 
           <Field
             label="Descripción corta *"

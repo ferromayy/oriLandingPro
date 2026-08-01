@@ -47,6 +47,7 @@ export const createOrderSchema = z
   .object({
     items: z.array(orderItemSchema).min(1, "El pedido no tiene productos"),
     total: z.coerce.number().int().min(0),
+    source: z.enum(["whatsapp", "staff"]).optional().default("whatsapp"),
   })
   .superRefine(validateOrderItemsTotal);
 

@@ -15,6 +15,9 @@ export type CustomerOrderItem = {
 export const ORDER_STATUSES = ["pending", "completed", "cancelled"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
+export const ORDER_SOURCES = ["whatsapp", "staff"] as const;
+export type OrderSource = (typeof ORDER_SOURCES)[number];
+
 export type CustomerOrder = {
   id: string;
   /** Posición en la lista (1, 2, 3…). Se renumera al eliminar pedidos. */
@@ -22,6 +25,8 @@ export type CustomerOrder = {
   /** Código público fijo (1600, 1601…). No cambia al eliminar otros pedidos. */
   order_code: number;
   status: OrderStatus;
+  /** whatsapp = web/cliente; staff = cargado por operario en admin. */
+  source: OrderSource;
   items: CustomerOrderItem[];
   total: number;
   whatsapp_message: string;
@@ -33,6 +38,32 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   completed: "Finalizado",
   cancelled: "Cancelado",
 };
+
+export const ORDER_SOURCE_LABELS: Record<OrderSource, string> = {
+  whatsapp: "WhatsApp",
+  staff: "Operario",
+};
+
+/** Marcador en el mensaje cuando aún no existe la columna `source` en DB. */
+export const STAFF_ORDER_MARKER = "[Cargado por operario Orí]";
+
+export function withStaffOrderMarker(message: string): string {
+  const trimmed = message.trimStart();
+  if (trimmed.includes(STAFF_ORDER_MARKER)) return message;
+  return `${STAFF_ORDER_MARKER}\n\n${trimmed}`;
+}
+
+export function hasStaffOrderMarker(message: string | null | undefined): boolean {
+  return Boolean(message?.includes(STAFF_ORDER_MARKER));
+}
+
+export function resolveOrderSource(
+  source: OrderSource | string | null | undefined,
+  whatsappMessage?: string | null,
+): OrderSource {
+  if (source === "staff" || hasStaffOrderMarker(whatsappMessage)) return "staff";
+  return "whatsapp";
+}
 
 /** Primer código visible para clientes (WhatsApp, etc.). */
 export const ORDER_CODE_START = 1600;

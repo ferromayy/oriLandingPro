@@ -2,7 +2,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { CreateOrderInput, UpdateOrderItemsInput } from "@/lib/orders/schema";
 import type { CustomerOrder, OrderStatus } from "@/lib/orders/types";
 import type { CustomerOrderInsert } from "@/types/database";
-import { legacyOrderCodeFromNumber, ORDER_CODE_START } from "@/lib/orders/types";
+import {
+  legacyOrderCodeFromNumber,
+  ORDER_CODE_START,
+  resolveOrderSource,
+  withStaffOrderMarker,
+} from "@/lib/orders/types";
 import { buildWhatsAppOrderMessage } from "@/lib/site/whatsapp-order";
 
 function normalizeOrder(raw: CustomerOrder): CustomerOrder {
@@ -15,13 +20,26 @@ function normalizeOrder(raw: CustomerOrder): CustomerOrder {
     order_number: orderNumber,
     order_code: orderCode,
     status: raw.status ?? "pending",
+    source: resolveOrderSource(raw.source, raw.whatsapp_message),
     items: Array.isArray(raw.items) ? raw.items : [],
   };
 }
 
 function isMissingColumnError(error: { message?: string } | null, column: string): boolean {
   const message = error?.message?.toLowerCase() ?? "";
-  return message.includes(column.toLowerCase()) && message.includes("schema cache");
+  if (!message.includes(column.toLowerCase())) return false;
+  return (
+    message.includes("schema cache") ||
+    message.includes("does not exist") ||
+    message.includes("could not find")
+  );
+}
+
+function finalizeWhatsAppMessage(
+  message: string,
+  source: CreateOrderInput["source"],
+): string {
+  return source === "staff" ? withStaffOrderMarker(message) : message;
 }
 
 type OrderSlots =
@@ -76,6 +94,7 @@ export async function createCustomerOrder(
 ): Promise<CustomerOrder> {
   const supabase = createAdminClient();
   const slots = await getNextOrderSlots();
+  const source = input.source ?? "whatsapp";
   const whatsappItems = input.items.map((item) => ({
     codename: item.codename ?? null,
     name: item.name,
@@ -85,10 +104,9 @@ export async function createCustomerOrder(
     price: item.unit_price,
   }));
 
-  const placeholderMessage = buildWhatsAppOrderMessage(
-    whatsappItems,
-    input.total,
-    "…",
+  const placeholderMessage = finalizeWhatsAppMessage(
+    buildWhatsAppOrderMessage(whatsappItems, input.total, "…"),
+    source,
   );
 
   const insertPayload: CustomerOrderInsert = slots.legacySchema
@@ -96,6 +114,7 @@ export async function createCustomerOrder(
         items: input.items,
         total: input.total,
         whatsapp_message: placeholderMessage,
+        source,
       }
     : {
         order_number: slots.order_number,
@@ -103,6 +122,7 @@ export async function createCustomerOrder(
         items: input.items,
         total: input.total,
         whatsapp_message: placeholderMessage,
+        source,
       };
 
   const { data, error } = await supabase
@@ -117,14 +137,41 @@ export async function createCustomerOrder(
         "Falta la columna order_code en Supabase. Ejecutá la migración 014_customer_orders_production_catch_up.sql en el SQL Editor.",
       );
     }
+    if (isMissingColumnError(error, "source")) {
+      const { source: _source, ...withoutSource } = insertPayload;
+      const retry = await supabase
+        .from("customer_orders")
+        .insert(withoutSource)
+        .select("*")
+        .single();
+      if (retry.error) throw new Error(retry.error.message);
+      const order = normalizeOrder({
+        ...(retry.data as CustomerOrder),
+        source: "staff",
+      });
+      const whatsapp_message = finalizeWhatsAppMessage(
+        buildWhatsAppOrderMessage(whatsappItems, input.total, order.order_code),
+        source,
+      );
+      const { data: updated, error: updateError } = await supabase
+        .from("customer_orders")
+        .update({ whatsapp_message })
+        .eq("id", order.id)
+        .select("*")
+        .single();
+      if (updateError) throw new Error(updateError.message);
+      return normalizeOrder({
+        ...(updated as CustomerOrder),
+        source,
+      });
+    }
     throw new Error(error.message);
   }
 
   const order = normalizeOrder(data as CustomerOrder);
-  const whatsapp_message = buildWhatsAppOrderMessage(
-    whatsappItems,
-    input.total,
-    order.order_code,
+  const whatsapp_message = finalizeWhatsAppMessage(
+    buildWhatsAppOrderMessage(whatsappItems, input.total, order.order_code),
+    source,
   );
 
   const { data: updated, error: updateError } = await supabase
@@ -135,7 +182,10 @@ export async function createCustomerOrder(
     .single();
 
   if (updateError) throw new Error(updateError.message);
-  return normalizeOrder(updated as CustomerOrder);
+  return normalizeOrder({
+    ...(updated as CustomerOrder),
+    source,
+  });
 }
 
 export async function updateCustomerOrderStatusAdmin(

@@ -45,6 +45,8 @@ export type CoffeeFormData = {
   variants: CoffeeVariantForm[];
   is_active: boolean;
   sort_order: number;
+  /** Solo uso interno (admin / tomar pedidos). No afecta la web. */
+  stock_quantity: number;
 };
 
 export function defaultVariants(): CoffeeVariantForm[] {
@@ -92,6 +94,10 @@ export function coffeeToFormData(coffee: Coffee): CoffeeFormData {
     variants,
     is_active: coffee.is_active,
     sort_order: coffee.sort_order,
+    stock_quantity:
+      typeof coffee.stock_quantity === "number" && coffee.stock_quantity >= 0
+        ? coffee.stock_quantity
+        : 0,
   };
 }
 

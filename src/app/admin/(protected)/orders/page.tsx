@@ -1,5 +1,6 @@
 import { OrderActions } from "@/components/admin/order-actions";
 import { OrderItemsEditor } from "@/components/admin/order-items-editor";
+import { TakeOrderPanel } from "@/components/admin/take-order-panel";
 import { formatArsPrice } from "@/lib/coffees/types";
 import { getAllCoffeesAdmin } from "@/lib/coffees/admin";
 import { getAllCustomerOrdersAdmin } from "@/lib/orders/admin";
@@ -9,6 +10,7 @@ import {
   getOrderCode,
   getOrderNumber,
 } from "@/lib/orders/display";
+import { ORDER_SOURCE_LABELS } from "@/lib/orders/types";
 
 export default async function AdminOrdersPage() {
   let orders: Awaited<ReturnType<typeof getAllCustomerOrdersAdmin>> = [];
@@ -26,12 +28,15 @@ export default async function AdminOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">Pedidos</h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          El nº de orden es posicional (1, 2, 3…) y se ajusta al eliminar pedidos. El
-          código (#1600, #1601…) es fijo y no cambia.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-zinc-900">Pedidos</h1>
+          <p className="mt-1 text-sm text-zinc-600">
+            El nº de orden es posicional (1, 2, 3…) y se ajusta al eliminar pedidos. El
+            código (#1600, #1601…) es fijo y no cambia.
+          </p>
+        </div>
+        <TakeOrderPanel coffees={coffees} />
       </div>
 
       {error && (
@@ -67,9 +72,21 @@ export default async function AdminOrdersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="font-mono text-base font-semibold text-zinc-900">
-                      #{getOrderCode(order)}
-                    </span>
+                    <div className="flex flex-col items-start gap-1.5">
+                      <span className="font-mono text-base font-semibold text-zinc-900">
+                        #{getOrderCode(order)}
+                      </span>
+                      {order.source === "staff" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900">
+                          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-600" />
+                          {ORDER_SOURCE_LABELS.staff}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600">
+                          {ORDER_SOURCE_LABELS.whatsapp}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-zinc-600">
                     {formatOrderDate(order.created_at)}

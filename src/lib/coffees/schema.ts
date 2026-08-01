@@ -67,6 +67,7 @@ export const coffeeFormSchema = z
       ),
     is_active: z.coerce.boolean().optional().default(true),
     sort_order: z.coerce.number().int().optional().default(0),
+    stock_quantity: z.coerce.number().int().min(0).optional().default(0),
   })
   .superRefine((data, ctx) => {
     const primaryCount = data.images.filter((img) => img.is_primary).length;

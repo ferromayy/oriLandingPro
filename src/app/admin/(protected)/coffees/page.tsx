@@ -49,6 +49,7 @@ export default async function AdminCoffeesPage() {
               <th className="px-4 py-3">Producto</th>
               <th className="px-4 py-3">Fotos</th>
               <th className="px-4 py-3">Desde</th>
+              <th className="px-4 py-3">Stock</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3 text-right">Acciones</th>
             </tr>
@@ -91,6 +92,11 @@ export default async function AdminCoffeesPage() {
                   <td className="px-4 py-3">
                     {price !== null ? formatArsPrice(price) : "—"}
                   </td>
+                  <td className="px-4 py-3 font-mono text-zinc-700">
+                    {typeof coffee.stock_quantity === "number"
+                      ? coffee.stock_quantity
+                      : 0}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {soldOut && (
@@ -126,7 +132,7 @@ export default async function AdminCoffeesPage() {
             })}
             {coffees.length === 0 && !error && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
                   No hay cafés. Creá el primero o ejecutá las migraciones SQL.
                 </td>
               </tr>
