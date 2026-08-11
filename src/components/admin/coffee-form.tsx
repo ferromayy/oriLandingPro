@@ -319,7 +319,8 @@ export function CoffeeForm({
     }
   }
 
-  const imagesMissing = form.images.length < MIN_COFFEE_IMAGES;
+  const imagesMissing =
+    form.is_active && form.images.length < MIN_COFFEE_IMAGES;
   const linkedEducationSlug =
     extractEducationSlugFromUrl(form.extended_content_url ?? "") ?? "";
   const catchWordCount = countWords(form.extended_content_catch_text);
@@ -373,7 +374,10 @@ export function CoffeeForm({
                 placeholder="Brasil - Natural"
               />
             </Field>
-            <Field label="Slug (URL) *" error={fieldHasError(issues, "slug")}>
+            <Field
+              label={form.is_active ? "Slug (URL) *" : "Slug (URL)"}
+              error={fieldHasError(issues, "slug")}
+            >
               <input
                 value={form.slug}
                 onChange={(e) => {
@@ -425,7 +429,7 @@ export function CoffeeForm({
           </Field>
 
           <Field
-            label="Descripción corta *"
+            label={form.is_active ? "Descripción corta *" : "Descripción corta"}
             error={fieldHasError(issues, "short_description")}
           >
             <textarea
@@ -565,7 +569,10 @@ export function CoffeeForm({
             </p>
           </div>
 
-          <Field label="Notas de cata *" error={fieldHasError(issues, "tasting_notes")}>
+          <Field
+            label={form.is_active ? "Notas de cata *" : "Notas de cata"}
+            error={fieldHasError(issues, "tasting_notes")}
+          >
             <textarea
               rows={3}
               value={form.tasting_notes}
@@ -629,10 +636,13 @@ export function CoffeeForm({
         >
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-              Fotos ({MIN_COFFEE_IMAGES}–{MAX_COFFEE_IMAGES}) *
+              Fotos ({MIN_COFFEE_IMAGES}–{MAX_COFFEE_IMAGES})
+              {form.is_active ? " *" : ""}
             </h2>
             <p className="mt-1 text-xs text-zinc-500">
-              Marcá una como <strong>principal</strong> — es la que se ve en la home.
+              {form.is_active
+                ? "Marcá una como principal — es la que se ve en la home."
+                : "Opcional mientras el producto esté oculto en la landing."}
             </p>
             {imagesMissing && (
               <p className="mt-2 text-xs font-medium text-amber-700">
@@ -714,9 +724,9 @@ export function CoffeeForm({
               Tamaños y precios *
             </h2>
             <p className="mt-1 text-xs text-zinc-500">
-              150g, 200g, 250g, 500g y 1kg — precio en ARS y disponibilidad por tamaño. Si
-              ningún tamaño tiene stock, el producto se muestra como{" "}
-              <strong>Sold Out</strong> pero sigue visible en la landing.
+              {form.is_active
+                ? "150g, 200g, 250g, 500g y 1kg — precio en ARS y disponibilidad por tamaño. Si ningún tamaño tiene stock, el producto se muestra como Sold Out pero sigue visible en la landing."
+                : "Al estar oculto en la landing, solo hace falta el nombre y al menos un precio. La disponibilidad por tamaño sirve para tomar pedidos internos."}
             </p>
           </div>
 
@@ -779,13 +789,20 @@ export function CoffeeForm({
           </div>
         </section>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={form.is_active}
-            onChange={(e) => updateField("is_active", e.target.checked)}
-          />
-          Visible en la landing
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.is_active}
+              onChange={(e) => updateField("is_active", e.target.checked)}
+            />
+            Visible en la landing
+          </span>
+          {!form.is_active && (
+            <span className="pl-6 text-xs text-zinc-500">
+              Producto interno: solo son obligatorios el nombre y al menos un precio.
+            </span>
+          )}
         </label>
 
         <div className="flex gap-3">

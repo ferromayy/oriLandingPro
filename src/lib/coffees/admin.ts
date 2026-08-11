@@ -2,14 +2,15 @@ import { normalizeExtendedContentUrl } from "@/lib/coffees/extended-content";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { prepareImageUpload } from "@/lib/uploads/prepare-image";
 import { COFFEE_RELATIONS_SELECT } from "@/lib/coffees/select";
-import type { CoffeeFormData } from "@/lib/coffees/types";
-import type { Coffee } from "@/lib/coffees/types";
+import type { CoffeeFormData, Coffee } from "@/lib/coffees/types";
+import { slugify } from "@/lib/coffees/types";
 import type { CoffeeInsert, CoffeeUpdate } from "@/types/database";
 
 function toCoffeePayload(data: CoffeeFormData): CoffeeInsert {
+  const slug = data.slug.trim() || slugify(data.name);
   return {
     name: data.name.trim(),
-    slug: data.slug.trim(),
+    slug,
     codename: data.codename.trim() || null,
     tasting_notes: data.tasting_notes.trim(),
     short_description: data.short_description.trim(),

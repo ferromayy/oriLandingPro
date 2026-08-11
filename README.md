@@ -6,15 +6,17 @@ Landing y panel admin para [Orí Cafe](https://www.oricafe.com.ar/), con **Next.
 
 - **Landing pública** — promo bar, header, grilla de cafés, detalle de producto, carrito y checkout por WhatsApp
 - **Educación** — notas en `/educacion` (Markdown, texto superior/inferior, imágenes portada/medio/final, fuente/nombre)
-- **Panel superadmin** (`/admin`) — cafés, pedidos (con edición de ítems) y educación
-- **Pedidos** — registro automático al checkout, códigos desde #1600, gestión en admin
-- **Supabase** — cafés, imágenes, variantes (150g–1kg), notas de educación, pedidos (migraciones hasta **023**)
+- **Panel superadmin** (`/admin`) — cafés, pedidos (edición de ítems + toma de pedido staff) y educación
+- **Pedidos** — registro automático al checkout (`whatsapp`) o por operario (`staff`), códigos desde #1600
+- **Stock interno** — `stock_quantity` por café (solo operarios; no controla sold-out en la web)
+- **Cafés ocultos** — productos internos sin publicar en la landing (validación relajada)
+- **Supabase** — cafés, imágenes, variantes (150g–1kg), notas de educación, pedidos (migraciones hasta **025**)
 
 ## Documentación
 
 Toda la documentación detallada está en **[`docs/`](./docs/README.md)**:
 
-- [Implementaciones](./docs/implementaciones.md) — educación, cafés, carrito, pedidos, deploy
+- [Implementaciones](./docs/implementaciones.md) — educación, cafés, carrito, pedidos, take-order, deploy
 - [Migraciones SQL](./docs/migraciones.md) — orden de migraciones y catch-up de producción
 
 ## Setup rápido
@@ -57,6 +59,8 @@ supabase/migrations/021_education_note_content_parts.sql          # texto superi
 supabase/migrations/022_coffee_variant_200g.sql                   # tamaño 200g
 supabase/migrations/023_coffee_producer.sql                       # productor (ficha técnica)
 supabase/migrations/019_coffee_extended_content_catch_text.sql    # texto “Seguí leyendo”
+supabase/migrations/024_customer_orders_source.sql                # origen whatsapp/staff
+supabase/migrations/025_coffee_stock_quantity.sql                 # stock interno
 ```
 
 Ver detalle en [`docs/migraciones.md`](./docs/migraciones.md).
@@ -75,9 +79,9 @@ npm run dev
 
 | Ruta | Descripción |
 |------|-------------|
-| `/admin` | Dashboard |
-| `/admin/coffees` | Cafés (galería, variantes 150g–1kg incl. 200g, ficha técnica con productor, nota vinculada) |
-| `/admin/orders` | Pedidos del carrito (editar ítems, finalizar, cancelar, eliminar) |
+| `/admin` | Dashboard + analytics |
+| `/admin/coffees` | Cafés (galería, variantes 150g–1kg, stock interno, ficha con productor, nota vinculada; ocultos permitidos) |
+| `/admin/orders` | Pedidos (editar ítems, take-order staff, finalizar, cancelar, eliminar) |
 | `/admin/education` | Notas de educación + QR |
 
 ## Scripts
@@ -87,4 +91,5 @@ npm run dev
 npm run build
 npm run start
 npm run lint
+npm run test
 ```

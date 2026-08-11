@@ -25,27 +25,17 @@ const variantSchema = z.object({
   is_available: z.coerce.boolean(),
 });
 
+const slugRegex = /^[a-z0-9-]+$/;
+
 export const coffeeFormSchema = z
   .object({
     name: z.string().min(1, "El nombre es obligatorio"),
-    slug: z
-      .string()
-      .min(1, "El slug es obligatorio")
-      .regex(/^[a-z0-9-]+$/, "El slug solo puede tener minúsculas, números y guiones"),
+    slug: z.string().optional().default(""),
     codename: z.string().optional().default(""),
-    tasting_notes: z.string().min(1, "Las notas de cata son obligatorias"),
-    short_description: z
-      .string()
-      .min(1, "La descripción corta es obligatoria (se muestra en el detalle del producto)"),
+    tasting_notes: z.string().optional().default(""),
+    short_description: z.string().optional().default(""),
     long_description: z.string().optional().default(""),
-    extended_content_url: z
-      .string()
-      .optional()
-      .default("")
-      .refine(isValidExtendedContentUrl, {
-        message:
-          "La URL debe apuntar a una nota de Educación (ej. /educacion/metodos-de-filtrado)",
-      }),
+    extended_content_url: z.string().optional().default(""),
     extended_content_catch_text: z.string().optional().default(""),
     origin: z.string().optional().default(""),
     varietal: z.string().optional().default(""),
@@ -54,11 +44,9 @@ export const coffeeFormSchema = z
     producer: z.string().optional().default(""),
     images: z
       .array(imageSchema)
-      .min(
-        MIN_COFFEE_IMAGES,
-        `Subí al menos ${MIN_COFFEE_IMAGES} fotos (tenés que marcar una como principal)`,
-      )
-      .max(MAX_COFFEE_IMAGES, `Máximo ${MAX_COFFEE_IMAGES} fotos por café`),
+      .max(MAX_COFFEE_IMAGES, `Máximo ${MAX_COFFEE_IMAGES} fotos por café`)
+      .optional()
+      .default([]),
     variants: z
       .array(variantSchema)
       .length(
@@ -70,6 +58,76 @@ export const coffeeFormSchema = z
     stock_quantity: z.coerce.number().int().min(0).optional().default(0),
   })
   .superRefine((data, ctx) => {
+    const isVisibleOnLanding = data.is_active !== false;
+
+    if (isVisibleOnLanding) {
+      if (!data.slug.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          message: "El slug es obligatorio",
+          path: ["slug"],
+        });
+      } else if (!slugRegex.test(data.slug)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "El slug solo puede tener minúsculas, números y guiones",
+          path: ["slug"],
+        });
+      }
+
+      if (!data.tasting_notes.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Las notas de cata son obligatorias",
+          path: ["tasting_notes"],
+        });
+      }
+
+      if (!data.short_description.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "La descripción corta es obligatoria (se muestra en el detalle del producto)",
+          path: ["short_description"],
+        });
+      }
+
+      if (data.images.length < MIN_COFFEE_IMAGES) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Subí al menos ${MIN_COFFEE_IMAGES} fotos (tenés que marcar una como principal)`,
+          path: ["images"],
+        });
+      }
+
+      for (const variant of data.variants) {
+        if (variant.is_available && variant.price <= 0) {
+          ctx.addIssue({
+            code: "custom",
+            message: `El tamaño ${variant.size_grams}g está en stock pero no tiene precio`,
+            path: ["variants", String(variant.size_grams)],
+          });
+        }
+      }
+    } else {
+      if (data.slug.trim() && !slugRegex.test(data.slug)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "El slug solo puede tener minúsculas, números y guiones",
+          path: ["slug"],
+        });
+      }
+
+      const hasPricedVariant = data.variants.some((variant) => variant.price > 0);
+      if (!hasPricedVariant) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Cargá al menos un precio para poder tomar pedidos",
+          path: ["variants"],
+        });
+      }
+    }
+
     const primaryCount = data.images.filter((img) => img.is_primary).length;
     if (data.images.length > 0 && primaryCount !== 1) {
       ctx.addIssue({
@@ -79,18 +137,18 @@ export const coffeeFormSchema = z
       });
     }
 
-    for (const variant of data.variants) {
-      if (variant.is_available && variant.price <= 0) {
-        ctx.addIssue({
-          code: "custom",
-          message: `El tamaño ${variant.size_grams}g está en stock pero no tiene precio`,
-          path: ["variants", String(variant.size_grams)],
-        });
-      }
+    const educationUrl = data.extended_content_url.trim();
+    if (educationUrl && !isValidExtendedContentUrl(educationUrl)) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "La URL debe apuntar a una nota de Educación (ej. /educacion/metodos-de-filtrado)",
+        path: ["extended_content_url"],
+      });
     }
 
     const catchText = data.extended_content_catch_text.trim();
-    if (data.extended_content_url.trim() && catchText) {
+    if (educationUrl && catchText) {
       const words = countWords(catchText);
       if (words > MAX_EXTENDED_CATCH_WORDS) {
         ctx.addIssue({

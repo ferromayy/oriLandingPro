@@ -29,6 +29,8 @@ Ejecutar en **Supabase → SQL Editor** del proyecto correspondiente (local o pr
 | 021 | `021_education_note_content_parts.sql` | Columnas `content_before_image` y `content_after_image`; migra `content` existente al bloque superior |
 | 022 | `022_coffee_variant_200g.sql` | Variante de **200 g** en `coffee_variants`; crea fila 200g (precio 0, sin stock) en cafés existentes |
 | 023 | `023_coffee_producer.sql` | Campo opcional `producer` (productor) en ficha técnica de cafés |
+| 024 | `024_customer_orders_source.sql` | Columna `source` en pedidos (`whatsapp` \| `staff`) |
+| 025 | `025_coffee_stock_quantity.sql` | Columna `stock_quantity` en cafés (stock interno para operarios) |
 
 ## Producción (Vercel)
 
@@ -100,9 +102,31 @@ supabase/migrations/023_coffee_producer.sql
 
 Después de la 022, configurá precio y stock de 200g en cada café desde `/admin/coffees`. Si el sitio en producción sigue mostrando sold out con stock solo en 200g, ejecutá la migración **y** hacé redeploy en Vercel.
 
+### Pedidos staff (`source`)
+
+Si al cargar pedidos de operario falla o no se distingue origen WhatsApp vs mostrador:
+
+```
+supabase/migrations/024_customer_orders_source.sql
+```
+
+### Stock interno (`stock_quantity`)
+
+Si al guardar un café en admin aparece:
+
+> Could not find the 'stock_quantity' column of 'coffees' in the schema cache
+
+Ejecutá:
+
+```
+supabase/migrations/025_coffee_stock_quantity.sql
+```
+
+Agrega `stock_quantity` (integer ≥ 0, default 0). Es stock **interno** para operarios; **no** controla sold-out en la web pública. Incluye `notify pgrst, 'reload schema'`.
+
 ### Schema cache
 
-Si el error persiste tras una migración, en Supabase → **Settings → API** usá **Reload schema** o esperá ~1 minuto.
+Si el error persiste tras una migración, en Supabase → **Settings → API** usá **Reload schema** o esperá ~1 minuto. La migración 024 no incluye notify; tras ejecutarla, recargá el schema a mano si hace falta.
 
 ## Notas
 

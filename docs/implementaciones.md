@@ -98,7 +98,23 @@ Si una nota tenía un solo campo `content`, al migrar todo queda en **texto supe
 - El sitio público lee las variantes **tal como están en la base** (`getAvailableVariants`); no ignora tamaños aunque el deploy sea viejo.
 - Si está sold out: badge en grilla/detalle, sin precio visible ni botón de compra.
 - En admin: badge **Sold out** si aplica; no hace falta stock en todos los tamaños para publicar.
-- **Importante:** marcar solo «En stock» sin precio no alcanza; el formulario valida que cada tamaño en stock tenga precio > 0.
+- **Importante:** si el café es **visible**, marcar solo «En stock» sin precio no alcanza; el formulario valida que cada tamaño en stock tenga precio > 0.
+
+### Productos ocultos (internos)
+
+- Con **Visible en la landing** desmarcado (`is_active = false`), el café no aparece en el catálogo público.
+- Validación relajada (`src/lib/coffees/schema.ts`): solo son obligatorios **nombre** y **al menos un precio > 0**.
+- Fotos, slug, notas de cata y descripción corta quedan opcionales mientras esté oculto.
+- Si el slug viene vacío al guardar, se genera desde el nombre (`slugify` en `src/lib/coffees/admin.ts`).
+- Sirve para productos de mostrador / take-order sin publicar en la web.
+- Tests: `src/lib/coffees/hidden-coffee-validation.test.ts`.
+
+### Stock interno (`stock_quantity`)
+
+- Columna en `coffees` (migración `025_coffee_stock_quantity.sql`): cantidad para uso de operarios.
+- **No** afecta sold-out ni disponibilidad en la landing (eso sigue siendo por variantes).
+- Se edita en el formulario de café; se muestra en el listado admin y en el panel de toma de pedidos.
+- Si falta la columna en Supabase, al guardar un café aparece el error de schema cache; ver [`migraciones.md`](./migraciones.md).
 
 ### Ficha técnica y notas de cata
 
@@ -161,9 +177,10 @@ Archivo: `src/lib/site/whatsapp-order.ts`
 | `order_number` | Número de orden **posicional** (1, 2, 3…). Se **renumera** al eliminar pedidos. |
 | `order_code` | Código público **fijo** (1600, 1601, 1602…). **No cambia** ni se reutiliza al borrar otros pedidos. |
 | `status` | `pending` \| `completed` \| `cancelled` |
+| `source` | `whatsapp` (cliente web) \| `staff` (operario en admin). Migración `024`. |
 | `items` | JSON con líneas del pedido |
 | `total` | Total en centavos/pesos enteros (según convención del proyecto) |
-| `whatsapp_message` | Texto exacto enviado por WhatsApp |
+| `whatsapp_message` | Texto exacto del pedido (WhatsApp o comanda staff) |
 | `created_at` | Fecha de creación |
 
 Constante del primer código: `ORDER_CODE_START = 1600` en `src/lib/orders/types.ts`.
@@ -173,8 +190,10 @@ Constante del primer código: `ORDER_CODE_START = 1600` en `src/lib/orders/types
 ### Panel admin — Pedidos
 
 - Ruta: `/admin/orders`
-- Tabla con: nº orden, código, fecha, detalle de ítems, total, acciones.
-- Dashboard (`/admin`) muestra contador de pedidos con enlace.
+- Tabla con: nº orden, código, origen (WhatsApp / Operario), fecha, detalle de ítems, total, acciones.
+- Dashboard (`/admin`) muestra contador de pedidos, analytics y enlace.
+- **Tomar pedido** (`TakeOrderPanel` en la misma página): el operario arma una comanda con cafés activos (visibles u ocultos con precio), tamaño, molienda y cantidad; se guarda con `source: "staff"`.
+- Los pedidos staff llevan marcador `[Cargado por operario Orí]` en el mensaje (`resolveOrderSource` / `withStaffOrderMarker` en `src/lib/orders/types.ts` y `admin.ts`).
 
 ### Acciones por pedido
 
@@ -191,11 +210,12 @@ API admin: `PATCH /api/admin/orders/[id]` acepta `{ status }` **o** `{ items, to
 
 ### API pública
 
-- `POST /api/orders` — crea pedido desde el carrito (sin auth). Devuelve `order_number`, `order_code` y `whatsapp_message`.
+- `POST /api/orders` — crea pedido desde el carrito (sin auth, `source` default `whatsapp`). Devuelve `order_number`, `order_code` y `whatsapp_message`.
+- `POST /api/admin/orders` — crea pedido staff desde take-order (requiere sesión admin; `source: "staff"`).
 
 ### Compatibilidad con esquema antiguo
 
-Si en Supabase falta la columna `order_code`, `createCustomerOrder` intenta un insert legacy (solo con `serial` de `order_number`) para no bloquear el checkout. **Igual se recomienda ejecutar la migración 014 en producción** para el admin completo.
+Si en Supabase falta la columna `order_code`, `createCustomerOrder` intenta un insert legacy (solo con `serial` de `order_number`) para no bloquear el checkout. **Igual se recomienda ejecutar la migración 014 en producción** para el admin completo. Para `source` y `stock_quantity`, ver migraciones **024** y **025**.
 
 ---
 
@@ -239,9 +259,9 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 
 | Área | Archivos |
 |------|----------|
-| Pedidos — lógica | `src/lib/orders/admin.ts`, `types.ts`, `schema.ts`, `display.ts`, `checkout.ts` |
+| Pedidos — lógica | `src/lib/orders/admin.ts`, `types.ts`, `schema.ts`, `display.ts`, `checkout.ts`, `helpers.ts`, `analytics.ts` |
 | Pedidos — API | `src/app/api/orders/route.ts`, `src/app/api/admin/orders/` |
-| Pedidos — UI admin | `src/app/admin/(protected)/orders/page.tsx`, `src/components/admin/order-actions.tsx`, `order-items-editor.tsx` |
+| Pedidos — UI admin | `src/app/admin/(protected)/orders/page.tsx`, `src/components/admin/order-actions.tsx`, `order-items-editor.tsx`, `take-order-panel.tsx` |
 | WhatsApp | `src/lib/site/whatsapp-order.ts` |
 | Carrito | `src/components/site/cart-context.tsx`, `cart-drawer.tsx` |
 | Educación | `src/lib/education/`, `src/app/(site)/educacion/`, `src/app/admin/(protected)/education/` |
@@ -251,6 +271,7 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 | QR educación | `src/components/admin/education-note-qr.tsx`, `src/lib/site/public-url.ts` |
 | Cafés — detalle público | `src/components/site/product-tech-tasting.tsx`, `extended-content-catch.tsx`, `product-purchase-panel.tsx` |
 | Cafés — admin | `src/lib/coffees/`, `src/components/admin/coffee-form.tsx` |
+| Cafés — validación oculta | `src/lib/coffees/schema.ts`, `hidden-coffee-validation.test.ts` |
 | Uploads admin | `src/lib/uploads/prepare-image.ts`, `src/lib/uploads/actions.ts` |
 | Features / flags | `src/lib/site/features.ts` |
 | Config Next.js | `next.config.ts` |
@@ -262,15 +283,15 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 
 | Ruta | Descripción |
 |------|-------------|
-| `/admin` | Dashboard |
-| `/admin/coffees` | Listado de cafés |
+| `/admin` | Dashboard + analytics de pedidos |
+| `/admin/coffees` | Listado de cafés (incluye stock interno) |
 | `/admin/coffees/new` | Alta |
 | `/admin/coffees/[id]/edit` | Edición |
-| `/admin/orders` | Pedidos del carrito |
+| `/admin/orders` | Pedidos + tomar pedido (staff) |
 | `/admin/education` | Notas de educación |
 | `/admin/education/new` | Nueva nota |
 | `/admin/education/[id]/edit` | Edición + QR |
 
 ---
 
-*Última actualización: junio 2026 — cafés (200g, productor opcional, lógica sold out por variantes en DB), educación (texto superior/inferior, imágenes portada/medio/final), migraciones 015–023.*
+*Última actualización: agosto 2026 — stock interno (`stock_quantity`), origen de pedido (`source` whatsapp/staff), take-order en admin, cafés ocultos con validación relajada, migraciones 024–025.*
