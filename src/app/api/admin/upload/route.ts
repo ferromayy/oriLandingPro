@@ -6,6 +6,8 @@ import { isAllowedImageUpload } from "@/lib/uploads/image-types";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
+
 export async function POST(request: Request) {
   const denied = await requireSuperAdminApi();
   if (denied) return denied;
@@ -25,6 +27,16 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { ok: false, message: "Solo se permiten imágenes (JPG, PNG, WebP, HEIC…)" },
         { status: 400 },
+      );
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "La imagen supera 12 MB. Reducila o exportala como JPG más liviano.",
+        },
+        { status: 413 },
       );
     }
 

@@ -60,6 +60,13 @@ export type CoffeeInsert = Omit<CoffeeRow, "id" | "created_at" | "updated_at"> &
 
 export type CoffeeUpdate = Partial<CoffeeInsert>;
 
+export type EducationNoteSection = "blog" | "prepara_en_casa";
+
+export type EducationContentBlockJson = {
+  text?: string;
+  images?: string[];
+};
+
 export type EducationNoteRow = {
   id: string;
   title: string;
@@ -67,8 +74,10 @@ export type EducationNoteRow = {
   content: string;
   content_before_image: string;
   content_after_image: string;
+  content_blocks: EducationContentBlockJson[];
   source: string;
   nombre: string;
+  section: EducationNoteSection;
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -77,13 +86,23 @@ export type EducationNoteRow = {
 
 export type EducationNoteInsert = Omit<
   EducationNoteRow,
-  "id" | "created_at" | "updated_at" | "source" | "nombre" | "content_before_image" | "content_after_image"
+  | "id"
+  | "created_at"
+  | "updated_at"
+  | "source"
+  | "nombre"
+  | "content_before_image"
+  | "content_after_image"
+  | "content_blocks"
+  | "section"
 > & {
   id?: string;
   source?: string;
   nombre?: string;
   content_before_image?: string;
   content_after_image?: string;
+  content_blocks?: EducationContentBlockJson[];
+  section?: EducationNoteSection;
   created_at?: string;
   updated_at?: string;
 };

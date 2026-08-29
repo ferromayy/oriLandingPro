@@ -8,67 +8,62 @@ Documentación de las funcionalidades agregadas al proyecto que no estaban cubie
 
 ### Sección pública
 
-- Rutas: `/educacion` (listado) y `/educacion/[slug]` (detalle).
+- Rutas:
+  - `/educacion` — **hub** con dos entradas: **Blog** y **Prepará en casa**
+  - `/educacion/blog` — listado de notas del blog
+  - `/educacion/prepara-en-casa` — listado de recetas de métodos
+  - `/educacion/[slug]` — detalle (compartido; links, QR y “Seguí leyendo” no cambian)
+- Cada nota tiene `section`: `blog` \| `prepara_en_casa` (migración **`026_education_note_section.sql`**, obligatoria). Sin ella, Prepará en casa no se persiste y la nota vuelve a Blog.
+- Slugs reservados (no usar en notas): `blog`, `prepara-en-casa`.
 - Flag en `src/lib/site/features.ts`: `EDUCATION_PUBLIC_ENABLED`. Si es `false`, las rutas devuelven 404 y el ítem desaparece del menú.
 - El contenido largo vive **solo en Educación**; los cafés tienen descripción corta en la ficha del producto.
 - **Layout:** ancho de lectura ampliado (`max-w-[58rem]`) en listado y detalle.
+- Constantes/meta: `src/lib/education/sections.ts`. Listados: `EducationNotesList` / `EducationSectionPage`.
 
-#### Contenido (Markdown)
+#### Contenido (párrafos + Markdown)
 
-- El texto se escribe en **Markdown** (`react-markdown` + `remark-gfm` + `remark-breaks`).
-- En admin hay **dos campos de texto** para controlar dónde van las imágenes del medio:
-  - **Texto superior** (`content_before_image`) — arriba de las imágenes intercaladas.
-  - **Texto inferior** (`content_after_image`) — debajo de las imágenes intercaladas.
-- Al guardar también se persiste `content` (concatenación de ambos bloques) por compatibilidad.
-- `normalizeEducationMarkdown()` quita un `# título` duplicado si coincide con el título de la nota.
-- Componentes: `EducationContentEditor` (admin), `EducationNoteContent` (público).
-
-#### Imágenes — roles y límites
-
-| Rol | Columna DB | Cantidad | Dónde se ve |
-|-----|------------|----------|-------------|
-| **Principal** (portada) | `is_primary` | 0–1 (opcional) | Listado: miniatura junto al título. Detalle: hero grande debajo del título. |
-| **Al medio** | `is_inline` | **1–2** (obligatoria al menos 1) | Entre texto superior e inferior. |
-| **Al final** (galería) | (ninguna) | **2–4** (obligatorio al menos 2) | Debajo de nombre/fuente. |
-
-Máximo **7 imágenes** por nota (1 + 2 + 4). Constantes en `src/lib/education/types.ts`.
-
-#### Orden en el detalle (`/educacion/[slug]`)
-
-1. Título (`EducationNoteTitleWithImage`, sin miniatura en detalle).
-2. Portada grande (`EducationNotePrimaryHero`), si existe.
-3. Texto superior (`EducationNoteBody` → `EducationNoteContent`).
-4. Imagen(es) al medio (`EducationNoteInlineImage`, 1 o 2).
-5. Texto inferior.
-6. Nombre y fuente (si existen).
-7. Galería final (`EducationNoteGallery`).
-
-En el **listado**, la portada aparece como miniatura junto al título; el extracto usa el contenido completo (`getEducationExcerpt`).
-
-Componentes públicos: `src/components/site/education-note-media.tsx`, `education-note-body.tsx`.
+- El cuerpo de la nota es una lista de **párrafos** (`content_blocks`), hasta **10** (migración **`027`**, obligatoria para el editor nuevo).
+- Cada párrafo tiene:
+  - Texto en **Markdown** (mismo editor: negrita, subtítulos, listas, preview).
+  - **0 a 3 imágenes** propias.
+- En admin: “¿Añadir otro párrafo?” / “¿Añadir imagen a este párrafo?”.
+- La **imagen principal** (portada) se mantiene aparte y no cuenta dentro de los párrafos.
+- Migración: `027_education_note_content_blocks.sql`.
+- Notas viejas (texto superior/inferior + imágenes medio/final) se **reconstruyen** al leer como párrafos.
+- `content` / `content_before_image` / `content_after_image` se siguen rellenando al guardar por compatibilidad.
 
 ### Admin
 
 - Rutas: `/admin/education`, `/admin/education/new`, `/admin/education/[id]/edit`.
-- CRUD con título, slug, **texto superior/inferior**, **fuente** (`source`), **nombre** (`nombre`), imágenes y orden.
-- **Editor de imágenes** (`EducationNoteImagesEditor`): tres zonas separadas — portada, medio (Medio 1 obligatorio, Medio 2 opcional), final (mín. 2).
-- Botón **«Hacer principal»** para promover otra imagen a portada.
-- **Upload:** acepta HEIC/HEIF; conversión a JPG con `sharp` (`src/lib/uploads/prepare-image.ts`).
+- CRUD con título, slug, **párrafos** (hasta 10, con 0–3 imágenes c/u), **imagen principal**, orden, **nombre**, **fuente**, y al final radios **¿En qué subsección va?** (Blog / Prepará en casa).
+- **Editor de párrafos** (`EducationParagraphsEditor`) + portada (`EducationPrimaryImageEditor`).
+- Botón **«Sí, añadir párrafo»** hasta el máximo; en cada párrafo se pueden sumar imágenes.
+- **Upload de imágenes:** por **`POST /api/admin/upload`** (no por Server Action), con compresión en el cliente (`compress-client.ts` / `upload-client.ts`) y optimización en servidor con `sharp` (`prepare-image.ts`). Acepta HEIC/HEIF.
+- Si aparece *Body exceeded 8mb/12mb limit*, es el tope de Server Actions: las fotos deben ir por la API de upload (ya es el flujo actual). Tras cambiar `next.config.ts`, reiniciá `npm run dev`.
 - **Validación** (`src/lib/education/schema.ts`):
-  - Al menos 1 imagen al medio, máximo 2.
-  - Al menos 2 imágenes al final, máximo 4.
-  - Texto superior obligatorio.
-  - Al menos un bloque de texto (superior o inferior).
-  - Una sola portada; una imagen no puede ser portada y del medio a la vez.
-- **Guardado:** Server Actions (`src/lib/education/actions.ts`, `src/lib/uploads/actions.ts`) para evitar errores HTML/500 en Vercel. Fallback legacy si faltan columnas nuevas en Supabase (`src/lib/education/admin.ts`).
+  - Al menos un párrafo con texto.
+  - Máximo 10 párrafos; máximo 3 imágenes por párrafo.
+  - Una sola portada.
+  - Slugs reservados: `blog`, `prepara-en-casa`.
+- **Guardado:** Server Action `saveEducationNoteAction` (JSON de la nota; las URLs de imágenes ya subidas). **No** se omite `section` en silencio: si falta la columna, el guardado falla con mensaje para correr la migración **026**.
+- **Importante:** sin la migración **026**, al elegir Prepará en casa la nota vuelve a aparecer como Blog (default). Hay que ejecutar `026_education_note_section.sql` en Supabase.
 - **QR por nota** (`EducationNoteQr`): en la edición de cada nota se generan QR descargables para:
   - **Producción** — `NEXT_PUBLIC_SITE_URL` (ej. `https://www.oricafe.com.ar`)
   - **Vercel** — `NEXT_PUBLIC_VERCEL_SITE_URL` (si está configurada)
   - **Local** — `NEXT_PUBLIC_LOCAL_SITE_URL` (default `http://localhost:3000`)
 
-#### Notas existentes tras migración 021
+#### Orden en el detalle (`/educacion/[slug]`)
 
-Si una nota tenía un solo campo `content`, al migrar todo queda en **texto superior**. Hay que mover manualmente al **texto inferior** la parte que va después de las imágenes del medio.
+1. Título
+2. Portada grande (si existe)
+3. Párrafos en orden (texto + hasta 3 imágenes c/u)
+4. Nombre y fuente (si existen)
+
+En el **listado**, la portada aparece como miniatura; el extracto usa el texto de todos los párrafos.
+
+#### Notas existentes
+
+Al abrir/editar una nota vieja, el sistema arma párrafos desde el contenido anterior. Al guardar, queda en el formato nuevo (`content_blocks`).
 
 ### Vínculo café ↔ educación
 
@@ -238,8 +233,10 @@ Si en Supabase falta la columna `order_code`, `createCustomerOrder` intenta un i
 - Proyecto de referencia: `ori-landing-pro-gutw` (`https://ori-landing-pro-gutw.vercel.app`).
 - El dominio `ori-landing-pro.vercel.app` puede dar 404 si apunta a otro proyecto; el dominio custom debe apuntar al proyecto correcto en Vercel.
 - **Importante:** las migraciones SQL deben ejecutarse en el **mismo proyecto Supabase** que usan las variables de Vercel.
-- Tras agregar tamaños o columnas nuevas (ej. 200g, `producer`), **redeploy** en Vercel para que admin y sitio público usen el código actualizado.
-- `next.config.ts` incluye `serverExternalPackages: ["sharp"]` y `serverActions.bodySizeLimit: "8mb"` para uploads de imágenes en admin.
+- Tras agregar tamaños o columnas nuevas (ej. 200g, `producer`, `section`, `content_blocks`), **redeploy** en Vercel para que admin y sitio público usen el código actualizado.
+- `next.config.ts` incluye `serverExternalPackages: ["sharp"]` y `serverActions.bodySizeLimit: "12mb"`.
+- Las imágenes del admin se suben por **`POST /api/admin/upload`** (compresión en el cliente + `sharp` en el servidor) para no pegarle al límite de body de Server Actions.
+- Migraciones de Educación recientes a no olvidar en el mismo proyecto Supabase de Vercel: **026** (`section`) y **027** (`content_blocks`).
 
 ### Desarrollo local (Turbopack)
 
@@ -265,14 +262,16 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 | WhatsApp | `src/lib/site/whatsapp-order.ts` |
 | Carrito | `src/components/site/cart-context.tsx`, `cart-drawer.tsx` |
 | Educación | `src/lib/education/`, `src/app/(site)/educacion/`, `src/app/admin/(protected)/education/` |
-| Educación — contenido | `src/lib/education/content.ts`, `markdown.ts`, `src/components/admin/education-content-editor.tsx` |
-| Educación — imágenes admin | `src/components/admin/education-note-images-editor.tsx` |
+| Educación — secciones | `src/lib/education/sections.ts`, `blog/page.tsx`, `prepara-en-casa/page.tsx` |
+| Educación — listados | `src/components/site/education-notes-list.tsx`, `education-section-page.tsx` |
+| Educación — contenido | `src/lib/education/blocks.ts`, `content.ts`, `markdown.ts`, `src/components/admin/education-content-editor.tsx`, `education-paragraphs-editor.tsx` |
+| Educación — imágenes admin | `src/components/admin/education-primary-image-editor.tsx` |
 | Educación — media pública | `src/components/site/education-note-media.tsx`, `education-note-body.tsx` |
 | QR educación | `src/components/admin/education-note-qr.tsx`, `src/lib/site/public-url.ts` |
 | Cafés — detalle público | `src/components/site/product-tech-tasting.tsx`, `extended-content-catch.tsx`, `product-purchase-panel.tsx` |
 | Cafés — admin | `src/lib/coffees/`, `src/components/admin/coffee-form.tsx` |
 | Cafés — validación oculta | `src/lib/coffees/schema.ts`, `hidden-coffee-validation.test.ts` |
-| Uploads admin | `src/lib/uploads/prepare-image.ts`, `src/lib/uploads/actions.ts` |
+| Uploads admin | `src/lib/uploads/upload-client.ts`, `compress-client.ts`, `prepare-image.ts`, `src/app/api/admin/upload/route.ts` |
 | Features / flags | `src/lib/site/features.ts` |
 | Config Next.js | `next.config.ts` |
 | Migraciones | `supabase/migrations/` (ver [migraciones.md](./migraciones.md)) |
@@ -294,4 +293,4 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 
 ---
 
-*Última actualización: agosto 2026 — stock interno (`stock_quantity`), origen de pedido (`source` whatsapp/staff), take-order en admin, cafés ocultos con validación relajada, migraciones 024–025.*
+*Última actualización: agosto 2026 — Educación (hub Blog / Prepará en casa, párrafos `content_blocks`, uploads por API + compresión), migraciones 026–027 obligatorias para sección y párrafos.*

@@ -14,7 +14,7 @@ import {
   MIN_EDUCATION_INLINE_IMAGES,
   type EducationNoteImageForm,
 } from "@/lib/education/types";
-import { uploadAdminImageAction } from "@/lib/uploads/actions";
+import { uploadAdminImageClient } from "@/lib/uploads/upload-client";
 import { IMAGE_UPLOAD_ACCEPT } from "@/lib/uploads/image-types";
 
 type Props = {
@@ -145,9 +145,7 @@ export function EducationNoteImagesEditor({
   }
 
   async function uploadFile(file: File): Promise<string> {
-    const body = new FormData();
-    body.append("file", file);
-    const result = await uploadAdminImageAction(body);
+    const result = await uploadAdminImageClient(file);
     if (!result.ok) throw new Error(result.message);
     return result.url;
   }

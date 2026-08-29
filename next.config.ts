@@ -12,7 +12,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["sharp"],
   experimental: {
     serverActions: {
-      bodySizeLimit: "8mb",
+      // Las imágenes van por /api/admin/upload; esto cubre payloads JSON grandes.
+      bodySizeLimit: "12mb",
     },
   },
   images: {

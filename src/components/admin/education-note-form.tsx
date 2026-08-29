@@ -9,9 +9,15 @@ import {
   inputErrorClass,
   sectionErrorClass,
 } from "@/components/admin/form-notifications";
-import { EducationContentEditor } from "@/components/admin/education-content-editor";
-import { EducationNoteImagesEditor } from "@/components/admin/education-note-images-editor";
+import { EducationParagraphsEditor } from "@/components/admin/education-paragraphs-editor";
+import { EducationPrimaryImageEditor } from "@/components/admin/education-primary-image-editor";
+import { emptyEducationBlock } from "@/lib/education/blocks";
 import { saveEducationNoteAction } from "@/lib/education/actions";
+import {
+  EDUCATION_SECTION_DEFAULT,
+  EDUCATION_SECTION_META,
+  EDUCATION_SECTIONS,
+} from "@/lib/education/sections";
 import {
   slugify,
   type EducationNoteFormData,
@@ -24,10 +30,10 @@ import {
 const emptyForm: EducationNoteFormData = {
   title: "",
   slug: "",
-  content_before_image: "",
-  content_after_image: "",
+  content_blocks: [emptyEducationBlock()],
   source: "",
   nombre: "",
+  section: EDUCATION_SECTION_DEFAULT,
   images: [],
   is_active: true,
   sort_order: 0,
@@ -43,7 +49,15 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
   const router = useRouter();
   const [form, setForm] = useState<EducationNoteFormData>(() =>
     initialData
-      ? { ...emptyForm, ...initialData, slug: initialData.slug ?? "" }
+      ? {
+          ...emptyForm,
+          ...initialData,
+          slug: initialData.slug ?? "",
+          content_blocks:
+            initialData.content_blocks?.length > 0
+              ? initialData.content_blocks
+              : [emptyEducationBlock()],
+        }
       : emptyForm,
   );
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
@@ -135,7 +149,7 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {issues.length > 0 && <FormErrorBanner issues={issues} />}
 
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 space-y-4">
+        <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-6">
           <div>
             <label className="block text-sm font-medium text-zinc-700">
               Título
@@ -172,69 +186,34 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
               <code className="rounded bg-zinc-100 px-1">
                 /educacion/{form.slug || "tu-slug"}
               </code>
-              . Elegilo una vez y no lo cambies si querés preservar links
-              externos.
+              . No uses <code className="rounded bg-zinc-100 px-1">blog</code> ni{" "}
+              <code className="rounded bg-zinc-100 px-1">prepara-en-casa</code>.
             </p>
           </div>
 
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-zinc-700">
-                Texto superior
-              </label>
-              <p className="mt-1 mb-2 text-xs text-zinc-500">
-                Aparece arriba de la imagen del medio. Si no usás imagen al medio, este
-                texto va primero y el inferior continúa debajo.
-              </p>
-              <EducationContentEditor
-                value={form.content_before_image}
-                onChange={(content) => updateField("content_before_image", content)}
-                noteTitle={form.title}
-                hasError={fieldHasError(issues, "content_before_image")}
-              />
-            </div>
+          <EducationPrimaryImageEditor
+            images={form.images}
+            onChange={(images) => updateField("images", images)}
+            hasError={fieldHasError(issues, "images")}
+            onUploadError={(message) =>
+              showValidationErrors([{ field: "images", message }])
+            }
+            onClearError={clearIssues}
+          />
 
-            <div>
-              <label className="block text-sm font-medium text-zinc-700">
-                Texto inferior
-              </label>
-              <p className="mt-1 mb-2 text-xs text-zinc-500">
-                Aparece debajo de la imagen del medio. Dejalo vacío si no querés cortar la
-                nota en dos partes.
-              </p>
-              <EducationContentEditor
-                value={form.content_after_image}
-                onChange={(content) => updateField("content_after_image", content)}
-                noteTitle={form.title}
-                hasError={fieldHasError(issues, "content_after_image")}
-              />
-            </div>
-          </div>
-
-          <div
-            id="education-section-images"
-            className={`space-y-4 ${fieldHasError(issues, "images") ? sectionErrorClass : ""}`}
-          >
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-                Imágenes (opcional)
-              </h2>
-              <p className="mt-1 text-xs text-zinc-500">
-                Portada opcional, al menos una imagen al medio (hasta dos) y al menos dos al
-                final.
-              </p>
-            </div>
-
-            <EducationNoteImagesEditor
-              images={form.images}
-              onChange={(images) => updateField("images", images)}
-              hasError={fieldHasError(issues, "images")}
-              onUploadError={(message) =>
-                showValidationErrors([{ field: "images", message }])
-              }
-              onClearError={clearIssues}
-            />
-          </div>
+          <EducationParagraphsEditor
+            blocks={form.content_blocks}
+            onChange={(content_blocks) => updateField("content_blocks", content_blocks)}
+            noteTitle={form.title}
+            hasError={
+              fieldHasError(issues, "content_blocks") ||
+              issues.some((issue) => issue.field.startsWith("content_blocks."))
+            }
+            onUploadError={(message) =>
+              showValidationErrors([{ field: "content_blocks", message }])
+            }
+            onClearError={clearIssues}
+          />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -255,7 +234,7 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
                 }`}
               />
               <p className="mt-1 text-xs text-zinc-500">
-                Menor número = aparece primero en la sección Educación.
+                Menor número = aparece primero dentro de su sección (Blog o Prepará en casa).
               </p>
             </div>
 
@@ -309,6 +288,50 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
               />
             </div>
           </div>
+
+          <fieldset
+            className={`space-y-3 border-t border-zinc-100 pt-5 ${
+              fieldHasError(issues, "section") ? sectionErrorClass : ""
+            }`}
+          >
+            <legend className="text-sm font-semibold text-zinc-800">
+              ¿En qué subsección de Educación va?
+            </legend>
+            <p className="text-xs text-zinc-500">
+              Elegí una sola. Blog = notas generales. Prepará en casa = recetas de métodos.
+            </p>
+            <div className="space-y-2">
+              {EDUCATION_SECTIONS.map((section) => {
+                const meta = EDUCATION_SECTION_META[section];
+                const selected = form.section === section;
+                return (
+                  <label
+                    key={section}
+                    className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-3 text-sm transition ${
+                      selected
+                        ? "border-zinc-900 bg-zinc-50"
+                        : "border-zinc-200 hover:border-zinc-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="education-section"
+                      value={section}
+                      checked={selected}
+                      onChange={() => updateField("section", section)}
+                      className="mt-0.5 border-zinc-300"
+                    />
+                    <span>
+                      <span className="font-medium text-zinc-900">{meta.label}</span>
+                      <span className="mt-0.5 block text-xs text-zinc-500">
+                        {meta.description}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
         </div>
 
         <div className="flex flex-wrap gap-3">

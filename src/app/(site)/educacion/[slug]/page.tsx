@@ -2,11 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EducationNoteBody } from "@/components/site/education-note-body";
 import {
-  EducationNoteGallery,
   EducationNotePrimaryHero,
   EducationNoteTitleWithImage,
 } from "@/components/site/education-note-media";
 import { getEducationNoteBySlug } from "@/lib/education/queries";
+import {
+  educationSectionLabel,
+  educationSectionPath,
+  normalizeEducationSection,
+} from "@/lib/education/sections";
 import { EDUCATION_PUBLIC_ENABLED } from "@/lib/site/features";
 
 type Props = {
@@ -23,13 +27,17 @@ export default async function EducacionNotePage({ params }: Props) {
 
   if (!note) notFound();
 
+  const section = normalizeEducationSection(note.section);
+  const sectionPath = educationSectionPath(section);
+  const sectionLabel = educationSectionLabel(section);
+
   return (
     <main className="mx-auto w-full max-w-[58rem] flex-1 px-4 py-12 sm:px-6 lg:px-8">
       <Link
-        href="/educacion"
+        href={sectionPath}
         className="mb-8 inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest text-gray-500 transition-colors hover:text-gray-900"
       >
-        ← Volver a Educación
+        ← Volver a {sectionLabel}
       </Link>
 
       <article className="rounded-lg border border-gray-200 bg-white p-6 sm:p-8">
@@ -50,8 +58,6 @@ export default async function EducacionNotePage({ params }: Props) {
             {note.source?.trim() && <p>Fuente: {note.source.trim()}</p>}
           </div>
         )}
-
-        <EducationNoteGallery note={note} />
       </article>
     </main>
   );

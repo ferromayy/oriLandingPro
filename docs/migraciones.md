@@ -31,6 +31,8 @@ Ejecutar en **Supabase → SQL Editor** del proyecto correspondiente (local o pr
 | 023 | `023_coffee_producer.sql` | Campo opcional `producer` (productor) en ficha técnica de cafés |
 | 024 | `024_customer_orders_source.sql` | Columna `source` en pedidos (`whatsapp` \| `staff`) |
 | 025 | `025_coffee_stock_quantity.sql` | Columna `stock_quantity` en cafés (stock interno para operarios) |
+| 026 | `026_education_note_section.sql` | Columna `section` en notas (`blog` \| `prepara_en_casa`) |
+| 027 | `027_education_note_content_blocks.sql` | Columna `content_blocks` (párrafos JSON con texto + imágenes) |
 
 ## Producción (Vercel)
 
@@ -124,6 +126,41 @@ supabase/migrations/025_coffee_stock_quantity.sql
 
 Agrega `stock_quantity` (integer ≥ 0, default 0). Es stock **interno** para operarios; **no** controla sold-out en la web pública. Incluye `notify pgrst, 'reload schema'`.
 
+### Educación — secciones Blog / Prepará en casa
+
+**Obligatoria** para que Prepará en casa se persista. Sin esta columna, al guardar la nota vuelve a **Blog**.
+
+Si al guardar falla por `section`, o elegís Prepará en casa y al reabrir aparece Blog:
+
+```
+supabase/migrations/026_education_note_section.sql
+```
+
+Agrega `section` (`blog` | `prepara_en_casa`, default `blog`) e incluye `notify pgrst, 'reload schema'`.
+
+### Educación — párrafos flexibles (`content_blocks`)
+
+**Obligatoria** para el editor de párrafos con imágenes.
+
+Si al guardar una nota falla por `content_blocks`:
+
+```
+supabase/migrations/027_education_note_content_blocks.sql
+```
+
+Guarda hasta 10 párrafos con texto e imágenes (0–3 por párrafo). Incluye `notify pgrst, 'reload schema'`.
+
+### Educación — catch-up rápido (026 + 027)
+
+Si estás activando el hub Blog / Prepará en casa y los párrafos en una base ya en producción, ejecutá **en este orden**:
+
+```
+supabase/migrations/026_education_note_section.sql
+supabase/migrations/027_education_note_content_blocks.sql
+```
+
+Luego, en cada nota existente que sea receta, en admin marcá **Prepará en casa** y guardá.
+
 ### Schema cache
 
 Si el error persiste tras una migración, en Supabase → **Settings → API** usá **Reload schema** o esperá ~1 minuto. La migración 024 no incluye notify; tras ejecutarla, recargá el schema a mano si hace falta.
@@ -133,3 +170,4 @@ Si el error persiste tras una migración, en Supabase → **Settings → API** u
 - Las migraciones usan `if not exists` / `add column if not exists` cuando es posible, para poder re-ejecutarlas sin romper.
 - El panel admin requiere `SUPABASE_SERVICE_ROLE_KEY` en el servidor (Vercel incluida).
 - Después de cada migración en producción, probá `/api/health` y un pedido de prueba desde el carrito.
+- Uploads de admin: `POST /api/admin/upload` (compresión cliente + `sharp` en servidor). El `bodySizeLimit` de Server Actions (12mb) aplica al guardado JSON de formularios, no al binario de las fotos.

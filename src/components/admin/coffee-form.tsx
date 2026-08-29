@@ -33,7 +33,7 @@ import {
   normalizeExtendedContentUrl,
 } from "@/lib/coffees/extended-content";
 import { getEducationNotePublicPath } from "@/lib/site/public-url";
-import { uploadAdminImageAction } from "@/lib/uploads/actions";
+import { uploadAdminImageClient } from "@/lib/uploads/upload-client";
 import { IMAGE_UPLOAD_ACCEPT } from "@/lib/uploads/image-types";
 
 export type EducationNoteOption = {
@@ -196,9 +196,7 @@ export function CoffeeForm({
       const uploaded: CoffeeImageForm[] = [];
 
       for (const file of Array.from(files)) {
-        const body = new FormData();
-        body.append("file", file);
-        const result = await uploadAdminImageAction(body);
+        const result = await uploadAdminImageClient(file);
         if (!result.ok) {
           throw new Error(result.message);
         }

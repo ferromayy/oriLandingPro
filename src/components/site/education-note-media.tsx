@@ -107,12 +107,18 @@ export function EducationNoteGallery({ note }: { note: EducationNote }) {
 
 export function EducationNoteInlineImage({
   url,
+  compact = false,
 }: {
   url: string;
+  compact?: boolean;
 }) {
   return (
-    <figure className="my-10 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-      <div className="relative aspect-[16/10] w-full">
+    <figure
+      className={`overflow-hidden rounded-lg border border-gray-200 bg-gray-50 ${
+        compact ? "my-0" : "my-0"
+      }`}
+    >
+      <div className={`relative w-full ${compact ? "aspect-[4/3]" : "aspect-[16/10]"}`}>
         <Image
           src={url}
           alt=""

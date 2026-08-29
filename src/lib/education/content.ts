@@ -1,4 +1,8 @@
 import { stripMarkdown } from "@/lib/education/markdown";
+import {
+  combineEducationBlocksText,
+  getEducationContentBlocks,
+} from "@/lib/education/blocks";
 import type { EducationNote } from "@/lib/education/types";
 
 const DEFAULT_EXCERPT_LENGTH = 320;
@@ -11,17 +15,30 @@ export function combineEducationContent(before: string, after: string): string {
   return `${top}\n\n${bottom}`;
 }
 
-export function getEducationContentBefore(note: Pick<EducationNote, "content" | "content_before_image">): string {
+export function getEducationContentBefore(
+  note: Pick<EducationNote, "content" | "content_before_image">,
+): string {
   return note.content_before_image?.trim() || note.content?.trim() || "";
 }
 
-export function getEducationContentAfter(note: Pick<EducationNote, "content_after_image">): string {
+export function getEducationContentAfter(
+  note: Pick<EducationNote, "content_after_image">,
+): string {
   return note.content_after_image?.trim() || "";
 }
 
 export function getFullEducationContent(
-  note: Pick<EducationNote, "content" | "content_before_image" | "content_after_image">,
+  note: Pick<
+    EducationNote,
+    | "content"
+    | "content_before_image"
+    | "content_after_image"
+    | "content_blocks"
+    | "education_note_images"
+  >,
 ): string {
+  const fromBlocks = combineEducationBlocksText(getEducationContentBlocks(note));
+  if (fromBlocks.trim()) return fromBlocks;
   return combineEducationContent(
     getEducationContentBefore(note),
     getEducationContentAfter(note),
@@ -29,7 +46,14 @@ export function getFullEducationContent(
 }
 
 export function getEducationExcerpt(
-  note: Pick<EducationNote, "content" | "content_before_image" | "content_after_image">,
+  note: Pick<
+    EducationNote,
+    | "content"
+    | "content_before_image"
+    | "content_after_image"
+    | "content_blocks"
+    | "education_note_images"
+  >,
   maxLength = DEFAULT_EXCERPT_LENGTH,
 ): string {
   return getEducationExcerptFromText(getFullEducationContent(note), maxLength);
@@ -50,7 +74,14 @@ export function getEducationExcerptFromText(
 }
 
 export function educationNoteHasMore(
-  note: Pick<EducationNote, "content" | "content_before_image" | "content_after_image">,
+  note: Pick<
+    EducationNote,
+    | "content"
+    | "content_before_image"
+    | "content_after_image"
+    | "content_blocks"
+    | "education_note_images"
+  >,
   maxLength = DEFAULT_EXCERPT_LENGTH,
 ): boolean {
   return stripMarkdown(getFullEducationContent(note)).replace(/\s+/g, " ").length > maxLength;

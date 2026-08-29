@@ -4,7 +4,7 @@
 
 | Documento | Contenido |
 |-----------|-----------|
-| [implementaciones.md](./implementaciones.md) | Educación, cafés (ocultos, stock interno), carrito, pedidos (WhatsApp + take-order staff), deploy y desarrollo local |
-| [migraciones.md](./migraciones.md) | Migraciones SQL 001–025, catch-up de producción (`source`, `stock_quantity`, etc.) |
+| [implementaciones.md](./implementaciones.md) | Educación (hub Blog / Prepará en casa, párrafos, uploads por API), cafés, carrito, pedidos, deploy |
+| [migraciones.md](./migraciones.md) | Migraciones SQL 001–027; catch-up 026–027 obligatorio para Educación nueva |
 
 Para setup inicial del repo, ver también el [README principal](../README.md).
