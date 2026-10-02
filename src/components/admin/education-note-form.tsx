@@ -186,8 +186,10 @@ export function EducationNoteForm({ mode, noteId, initialData }: Props) {
               <code className="rounded bg-zinc-100 px-1">
                 /educacion/{form.slug || "tu-slug"}
               </code>
-              . No uses <code className="rounded bg-zinc-100 px-1">blog</code> ni{" "}
-              <code className="rounded bg-zinc-100 px-1">prepara-en-casa</code>.
+              . No uses{" "}
+              <code className="rounded bg-zinc-100 px-1">blog</code>,{" "}
+              <code className="rounded bg-zinc-100 px-1">prepara-en-casa</code> ni{" "}
+              <code className="rounded bg-zinc-100 px-1">academia</code>.
             </p>
           </div>
 

@@ -4,7 +4,30 @@ export type EducationSection = (typeof EDUCATION_SECTIONS)[number];
 export const EDUCATION_SECTION_DEFAULT: EducationSection = "blog";
 
 /** Slugs reservados para las páginas de listado (no usar como nota). */
-export const EDUCATION_RESERVED_SLUGS = ["blog", "prepara-en-casa"] as const;
+export const EDUCATION_RESERVED_SLUGS = [
+  "blog",
+  "prepara-en-casa",
+  "academia",
+] as const;
+
+/**
+ * Ramas del menú Educación (hover / mobile).
+ * La primera agrupa Blog + Prepará en casa; la segunda es Academia.
+ */
+export const EDUCATION_NAV_BRANCHES = [
+  {
+    id: "recursos",
+    label: "Blog y Prepará en casa",
+    path: "/educacion",
+    description: "Notas del blog y recetas para prepararte el café en casa.",
+  },
+  {
+    id: "academia",
+    label: "Academia",
+    path: "/educacion/academia",
+    description: "Formación y profundidad en el café de especialidad.",
+  },
+] as const;
 
 export const EDUCATION_SECTION_META: Record<
   EducationSection,

@@ -148,6 +148,28 @@ export type CustomerOrderInsert = {
 
 export type CustomerOrderUpdate = Partial<CustomerOrderInsert>;
 
+export type AcademiaEventRow = {
+  id: string;
+  image_url: string;
+  title: string;
+  subtitle: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AcademiaEventInsert = Omit<
+  AcademiaEventRow,
+  "id" | "created_at" | "updated_at"
+> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type AcademiaEventUpdate = Partial<AcademiaEventInsert>;
+
 export type Database = {
   public: {
     Tables: {
@@ -187,6 +209,12 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<EducationNoteImageRow>;
+        Relationships: [];
+      };
+      academia_events: {
+        Row: AcademiaEventRow;
+        Insert: AcademiaEventInsert;
+        Update: AcademiaEventUpdate;
         Relationships: [];
       };
       customer_orders: {

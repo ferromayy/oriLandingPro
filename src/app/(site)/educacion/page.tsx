@@ -50,6 +50,16 @@ export default function EducacionHubPage() {
           </Link>
         ))}
       </div>
+
+      <p className="mt-12 text-center text-sm text-gray-500">
+        ¿Buscás formación?{" "}
+        <Link
+          href="/educacion/academia"
+          className="font-medium text-gray-900 underline underline-offset-4"
+        >
+          Ir a Academia
+        </Link>
+      </p>
     </main>
   );
 }

@@ -5,12 +5,12 @@ Landing y panel admin para [Orí Cafe](https://www.oricafe.com.ar/), con **Next.
 ## Qué incluye
 
 - **Landing pública** — promo bar, header, grilla de cafés, detalle de producto, carrito y checkout por WhatsApp
-- **Educación** — hub en `/educacion` con **Blog** y **Prepará en casa** (recetas de métodos); detalle en `/educacion/[slug]`
+- **Educación** — menú con **Blog y Prepará en casa** + **Academia**; hub en `/educacion`, academia en `/educacion/academia`; detalle en `/educacion/[slug]`
 - **Panel superadmin** (`/admin`) — cafés, pedidos (edición de ítems + toma de pedido staff) y educación
 - **Pedidos** — registro automático al checkout (`whatsapp`) o por operario (`staff`), códigos desde #1600
 - **Stock interno** — `stock_quantity` por café (solo operarios; no controla sold-out en la web)
 - **Cafés ocultos** — productos internos sin publicar en la landing (validación relajada)
-- **Supabase** — cafés, imágenes, variantes (150g–1kg), notas de educación, pedidos (migraciones hasta **027**)
+- **Supabase** — cafés, imágenes, variantes (150g–1kg), notas de educación, eventos Academia, pedidos (migraciones hasta **028**)
 
 ## Documentación
 
@@ -63,6 +63,7 @@ supabase/migrations/024_customer_orders_source.sql                # origen whats
 supabase/migrations/025_coffee_stock_quantity.sql                 # stock interno
 supabase/migrations/026_education_note_section.sql                 # Blog / Prepará en casa
 supabase/migrations/027_education_note_content_blocks.sql          # párrafos flexibles
+supabase/migrations/028_academia_events.sql                        # eventos Academia
 ```
 
 Ver detalle en [`docs/migraciones.md`](./docs/migraciones.md).
@@ -84,7 +85,7 @@ npm run dev
 | `/admin` | Dashboard + analytics |
 | `/admin/coffees` | Cafés (galería, variantes 150g–1kg, stock interno, ficha con productor, nota vinculada; ocultos permitidos) |
 | `/admin/orders` | Pedidos (editar ítems, take-order staff, finalizar, cancelar, eliminar) |
-| `/admin/education` | Notas (Blog / Prepará en casa) + párrafos + QR |
+| `/admin/education` | Notas (Blog / Prepará en casa) + eventos Academia + QR |
 
 ## Scripts
 

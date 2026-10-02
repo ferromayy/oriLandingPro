@@ -9,12 +9,15 @@ Documentación de las funcionalidades agregadas al proyecto que no estaban cubie
 ### Sección pública
 
 - Rutas:
-  - `/educacion` — **hub** con dos entradas: **Blog** y **Prepará en casa**
+  - `/educacion` — **hub** con **Blog** y **Prepará en casa**
   - `/educacion/blog` — listado de notas del blog
   - `/educacion/prepara-en-casa` — listado de recetas de métodos
+  - `/educacion/academia` — **Academia** (eventos con imagen + 2 textos cortos)
   - `/educacion/[slug]` — detalle (compartido; links, QR y “Seguí leyendo” no cambian)
+- **Menú:** al pasar el mouse por **Educación** (desktop) se abren dos subsecciones: **Blog y Prepará en casa** (`/educacion`) y **Academia** (`/educacion/academia`). En mobile se expanden al tocar Educación. Meta: `EDUCATION_NAV_BRANCHES` en `src/lib/education/sections.ts`.
+- **Academia — eventos:** tabla `academia_events` (migración **`028`**). Cada evento tiene imagen + Texto 1 + Texto 2 (máx. **30** caracteres c/u). Admin: botón **Nuevo evento** en `/admin/education`, formulario en `/admin/education/events/new`. Público: grilla en `/educacion/academia`.
 - Cada nota tiene `section`: `blog` \| `prepara_en_casa` (migración **`026_education_note_section.sql`**, obligatoria). Sin ella, Prepará en casa no se persiste y la nota vuelve a Blog.
-- Slugs reservados (no usar en notas): `blog`, `prepara-en-casa`.
+- Slugs reservados (no usar en notas): `blog`, `prepara-en-casa`, `academia`.
 - Flag en `src/lib/site/features.ts`: `EDUCATION_PUBLIC_ENABLED`. Si es `false`, las rutas devuelven 404 y el ítem desaparece del menú.
 - El contenido largo vive **solo en Educación**; los cafés tienen descripción corta en la ficha del producto.
 - **Layout:** ancho de lectura ampliado (`max-w-[58rem]`) en listado y detalle.
@@ -262,7 +265,9 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 | WhatsApp | `src/lib/site/whatsapp-order.ts` |
 | Carrito | `src/components/site/cart-context.tsx`, `cart-drawer.tsx` |
 | Educación | `src/lib/education/`, `src/app/(site)/educacion/`, `src/app/admin/(protected)/education/` |
-| Educación — secciones | `src/lib/education/sections.ts`, `blog/page.tsx`, `prepara-en-casa/page.tsx` |
+| Educación — secciones | `src/lib/education/sections.ts`, `blog/page.tsx`, `prepara-en-casa/page.tsx`, `academia/page.tsx` |
+| Educación — menú | `src/components/site/site-header.tsx` (`EDUCATION_NAV_BRANCHES`) |
+| Academia — eventos | `src/lib/academia/`, `src/components/admin/academia-event-form.tsx`, `src/app/admin/(protected)/education/events/` |
 | Educación — listados | `src/components/site/education-notes-list.tsx`, `education-section-page.tsx` |
 | Educación — contenido | `src/lib/education/blocks.ts`, `content.ts`, `markdown.ts`, `src/components/admin/education-content-editor.tsx`, `education-paragraphs-editor.tsx` |
 | Educación — imágenes admin | `src/components/admin/education-primary-image-editor.tsx` |
