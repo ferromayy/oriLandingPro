@@ -33,7 +33,8 @@ Ejecutar en **Supabase → SQL Editor** del proyecto correspondiente (local o pr
 | 025 | `025_coffee_stock_quantity.sql` | Columna `stock_quantity` en cafés (stock interno para operarios) |
 | 026 | `026_education_note_section.sql` | Columna `section` en notas (`blog` \| `prepara_en_casa`) |
 | 027 | `027_education_note_content_blocks.sql` | Columna `content_blocks` (párrafos JSON con texto + imágenes) |
-| 028 | `028_academia_events.sql` | Tabla `academia_events` (imagen + 2 textos ≤30 para Academia) |
+| 028 | `028_academia_events.sql` | Tabla `academia_events` (imagen + 2 textos para Academia) |
+| 029 | `029_academia_events_text_max_60.sql` | Límite de Texto 1 / Texto 2 de Academia: **60** caracteres |
 
 ## Producción (Vercel)
 
@@ -170,7 +171,13 @@ Si al crear un evento de Academia falla la tabla:
 supabase/migrations/028_academia_events.sql
 ```
 
-Crea `academia_events` (imagen + título + subtítulo, máx. 30 caracteres c/u) e incluye `notify pgrst, 'reload schema'`.
+Crea `academia_events` (imagen + título + subtítulo) e incluye `notify pgrst, 'reload schema'`.
+
+Para subir el límite de Texto 1 / Texto 2 a **60** caracteres:
+
+```
+supabase/migrations/029_academia_events_text_max_60.sql
+```
 
 ### Schema cache
 

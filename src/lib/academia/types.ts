@@ -1,6 +1,6 @@
 import type { AcademiaEventRow } from "@/types/database";
 
-export const ACADEMIA_TEXT_MAX = 30;
+export const ACADEMIA_TEXT_MAX = 60;
 
 export type AcademiaEvent = AcademiaEventRow;
 
