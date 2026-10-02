@@ -242,6 +242,23 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
               {form.subtitle.length}/{ACADEMIA_TEXT_MAX} caracteres
             </p>
           </div>
+
+          <label className="flex flex-col gap-1 text-sm text-zinc-700">
+            <span className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.is_active}
+                onChange={(e) => updateField("is_active", e.target.checked)}
+                className="rounded border-zinc-300"
+              />
+              Visible en Academia
+            </span>
+            <span className="pl-6 text-xs text-zinc-500">
+              {form.is_active
+                ? "Se muestra en /educacion/academia."
+                : "Queda guardado, pero no se ve en el sitio todavía."}
+            </span>
+          </label>
         </div>
 
         <div className="flex flex-wrap gap-3">
