@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AcademiaEventCard } from "@/components/site/academia-event-card";
 import { getActiveAcademiaEvents } from "@/lib/academia/queries";
 import { EDUCATION_PUBLIC_ENABLED } from "@/lib/site/features";
 
@@ -52,26 +52,7 @@ export default async function EducacionAcademiaPage() {
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
-            <article
-              key={event.id}
-              className="overflow-hidden border border-gray-200 bg-gradient-to-br from-stone-50 via-white to-amber-50/40"
-            >
-              <div className="relative aspect-[4/3] bg-gray-100">
-                <Image
-                  src={event.image_url}
-                  alt={event.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"
-                />
-              </div>
-              <div className="px-5 py-5">
-                <h2 className="text-lg font-semibold tracking-tight text-gray-900">
-                  {event.title}
-                </h2>
-                <p className="mt-1 text-sm text-gray-600">{event.subtitle}</p>
-              </div>
-            </article>
+            <AcademiaEventCard key={event.id} event={event} />
           ))}
         </div>
       )}

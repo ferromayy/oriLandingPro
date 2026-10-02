@@ -80,6 +80,14 @@ export function buildWhatsAppCheckoutUrl(message: string): string {
   return `https://api.whatsapp.com/send?phone=${WHATSAPP_ORDER_NUMBER}&text=${text}`;
 }
 
+/** Consulta de info para eventos de Academia. */
+export const WHATSAPP_ACADEMIA_INFO_MESSAGE =
+  "Hola orí! necesito mas info de este curso/taller/experiencia. Muchas gracias!";
+
+export function buildAcademiaInfoWhatsAppUrl(): string {
+  return buildWhatsAppCheckoutUrl(WHATSAPP_ACADEMIA_INFO_MESSAGE);
+}
+
 export function openWhatsAppWithMessage(message: string): void {
   window.open(buildWhatsAppCheckoutUrl(message), "_blank", "noopener,noreferrer");
 }
