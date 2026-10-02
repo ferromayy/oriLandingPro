@@ -170,6 +170,7 @@ export default async function AdminEducationPage() {
                 <th className="px-4 py-3">Imagen</th>
                 <th className="px-4 py-3">Texto 1</th>
                 <th className="px-4 py-3">Texto 2</th>
+                <th className="px-4 py-3">Posición</th>
                 <th className="px-4 py-3">Estado</th>
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
@@ -190,6 +191,7 @@ export default async function AdminEducationPage() {
                   </td>
                   <td className="px-4 py-3 font-medium text-zinc-900">{event.title}</td>
                   <td className="px-4 py-3 text-zinc-600">{event.subtitle}</td>
+                  <td className="px-4 py-3 text-zinc-600">{event.sort_order}</td>
                   <td className="px-4 py-3">
                     {event.is_active ? (
                       <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] uppercase text-emerald-800">
@@ -219,7 +221,7 @@ export default async function AdminEducationPage() {
               ))}
               {events.length === 0 && !eventsError && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
                     No hay eventos todavía. Creá el primero.
                   </td>
                 </tr>

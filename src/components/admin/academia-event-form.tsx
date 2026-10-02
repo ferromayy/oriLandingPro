@@ -243,6 +243,28 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
             </p>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-zinc-700">
+              Posición
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={form.sort_order}
+              onChange={(e) =>
+                updateField("sort_order", Math.max(0, Number(e.target.value) || 0))
+              }
+              className={`mt-1 w-full max-w-[10rem] rounded-lg border px-3 py-2 text-sm ${
+                fieldHasError(issues, "sort_order")
+                  ? inputErrorClass
+                  : "border-zinc-300"
+              }`}
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              Menor número = aparece primero en Academia.
+            </p>
+          </div>
+
           <label className="flex flex-col gap-1 text-sm text-zinc-700">
             <span className="flex items-center gap-2">
               <input
