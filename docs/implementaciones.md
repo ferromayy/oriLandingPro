@@ -16,6 +16,7 @@ Documentación de las funcionalidades agregadas al proyecto que no estaban cubie
   - `/educacion/[slug]` — detalle (compartido; links, QR y “Seguí leyendo” no cambian)
 - **Menú:** al pasar el mouse por **Educación** (desktop) se abren dos subsecciones: **Blog y Prepará en casa** (`/educacion`) y **Academia** (`/educacion/academia`). En mobile se expanden al tocar Educación. Meta: `EDUCATION_NAV_BRANCHES` en `src/lib/education/sections.ts`.
 - **Academia — eventos:** tabla `academia_events` (migración **`028`**, límite de texto en **`029`**). Cada evento tiene imagen + Texto 1 + Texto 2 (máx. **60** caracteres c/u). Admin: botón **Nuevo evento** en `/admin/education`, formulario en `/admin/education/events/new`. Público: grilla en `/educacion/academia`.
+- **Academia — equipo:** sección estática **Quiénes lo hacen posible** (layout foto + texto). Datos en `src/lib/academia/people.ts`; sin admin.
 - Cada nota tiene `section`: `blog` \| `prepara_en_casa` (migración **`026_education_note_section.sql`**, obligatoria). Sin ella, Prepará en casa no se persiste y la nota vuelve a Blog.
 - Slugs reservados (no usar en notas): `blog`, `prepara-en-casa`, `academia`.
 - Flag en `src/lib/site/features.ts`: `EDUCATION_PUBLIC_ENABLED`. Si es `false`, las rutas devuelven 404 y el ítem desaparece del menú.

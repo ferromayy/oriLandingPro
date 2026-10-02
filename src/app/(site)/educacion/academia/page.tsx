@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AcademiaEventCard } from "@/components/site/academia-event-card";
+import { AcademiaPeopleSection } from "@/components/site/academia-people-section";
 import { getActiveAcademiaEvents } from "@/lib/academia/queries";
 import { EDUCATION_PUBLIC_ENABLED } from "@/lib/site/features";
 
@@ -56,6 +57,8 @@ export default async function EducacionAcademiaPage() {
           ))}
         </div>
       )}
+
+      <AcademiaPeopleSection />
     </main>
   );
 }
