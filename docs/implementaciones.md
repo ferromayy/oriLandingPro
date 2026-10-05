@@ -12,10 +12,42 @@ Documentación de las funcionalidades agregadas al proyecto que no estaban cubie
   - `/educacion` — **hub** con **Blog** y **Prepará en casa**
   - `/educacion/blog` — listado de notas del blog
   - `/educacion/prepara-en-casa` — listado de recetas de métodos
-  - `/educacion/academia` — **Academia** (eventos con imagen + 2 textos cortos)
+  - `/educacion/academia` — **Academia** (cards de eventos)
   - `/educacion/[slug]` — detalle (compartido; links, QR y “Seguí leyendo” no cambian)
 - **Menú:** al pasar el mouse por **Educación** (desktop) se abren dos subsecciones: **Blog y Prepará en casa** (`/educacion`) y **Academia** (`/educacion/academia`). En mobile se expanden al tocar Educación. Meta: `EDUCATION_NAV_BRANCHES` en `src/lib/education/sections.ts`.
-- **Academia — eventos:** tabla `academia_events` (migración **`028`**, límite de texto en **`029`**). Cada evento tiene imagen + Texto 1 + Texto 2 (máx. **60** caracteres c/u). Admin: botón **Nuevo evento** en `/admin/education`, formulario en `/admin/education/events/new`. Público: grilla en `/educacion/academia`.
+- **Academia — eventos:** tabla `academia_events` (migración **`028`**, límite de título y edición en **`029`**, duración y descripción en **`030`**). Admin: botón **Nuevo evento** en `/admin/education`, formulario en `/admin/education/events/new`. Público: grilla en `/educacion/academia`. Card: `src/components/site/academia-event-card.tsx`.
+
+#### Cards de Academia — textos
+
+Todas las cards usan el mismo orden. Si un dato no está, esa línea no se muestra.
+
+Siempre:
+
+1. **Imagen**
+2. **Título** (máx. 60)
+3. **Ubicación** — hoy todas dicen `Córdoba capital`
+4. **Más info** — abre WhatsApp
+
+Puede no estar:
+
+5. **Fecha o estado** — una fecha (`10/10/26`), un rango (`10/11/26 al 6/12/26`) o un aviso (`PRÓXIMAMENTE LANZAMIENTO OFICIAL`). Una sola línea.
+6. **Por** — uno o más educadores, cada uno en su línea. Si el nombre trae un `@`, ese handle va a Instagram y el resto de la card sigue a WhatsApp.
+7. **Edición y lugar** — el encuentro concreto, por ejemplo `1.ª edición — Baltus Cafetería (Nueva Córdoba)` (máx. 60).
+8. **Duración** — por ejemplo `3 horas` (máx. 40).
+9. **Nota** — una frase suelta, sin título. Hoy solo café en casa: `Próximamente en la cafetería de tu barrio`.
+10. **Descripción** — al pasar el mouse, en lugar de la imagen, con el título **Descripción** (máx. 500). En el celular queda debajo del resto. Párrafos separados por línea en blanco, o una lista si cada línea empieza con `* `.
+
+Cómo se guarda:
+
+| En la card | Dónde vive |
+|---|---|
+| Título | `title`. Si incluye ` POR:`, lo de antes es el título visible y lo de después son los educadores, separados por `-`. |
+| Fecha o estado + edición y lugar | `subtitle`. Si la primera línea es una fecha y hay otra línea, la primera es la fecha y el resto es el lugar. Si hay una sola línea, es la fecha o el estado. |
+| Duración | `duration` (migración **030**) |
+| Descripción | `description` (migración **030**) |
+| Ubicación y nota | En la card, no en columnas propias |
+
+Sin la migración **030**, el admin no puede guardar duración ni descripción. La card pública igual muestra la copia de café en casa y de filtrados desde el componente.
 - **Academia — equipo:** sección estática **Quiénes lo hacen posible** (layout foto + texto). Datos en `src/lib/academia/people.ts`; sin admin.
 - Cada nota tiene `section`: `blog` \| `prepara_en_casa` (migración **`026_education_note_section.sql`**, obligatoria). Sin ella, Prepará en casa no se persiste y la nota vuelve a Blog.
 - Slugs reservados (no usar en notas): `blog`, `prepara-en-casa`, `academia`.
@@ -268,7 +300,7 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 | Educación | `src/lib/education/`, `src/app/(site)/educacion/`, `src/app/admin/(protected)/education/` |
 | Educación — secciones | `src/lib/education/sections.ts`, `blog/page.tsx`, `prepara-en-casa/page.tsx`, `academia/page.tsx` |
 | Educación — menú | `src/components/site/site-header.tsx` (`EDUCATION_NAV_BRANCHES`) |
-| Academia — eventos | `src/lib/academia/`, `src/components/admin/academia-event-form.tsx`, `src/app/admin/(protected)/education/events/` |
+| Academia — eventos | `src/lib/academia/`, `src/components/site/academia-event-card.tsx`, `src/components/admin/academia-event-form.tsx`, `src/app/admin/(protected)/education/events/` |
 | Educación — listados | `src/components/site/education-notes-list.tsx`, `education-section-page.tsx` |
 | Educación — contenido | `src/lib/education/blocks.ts`, `content.ts`, `markdown.ts`, `src/components/admin/education-content-editor.tsx`, `education-paragraphs-editor.tsx` |
 | Educación — imágenes admin | `src/components/admin/education-primary-image-editor.tsx` |

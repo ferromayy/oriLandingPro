@@ -153,6 +153,8 @@ export type AcademiaEventRow = {
   image_url: string;
   title: string;
   subtitle: string;
+  duration: string;
+  description: string;
   is_active: boolean;
   sort_order: number;
   created_at: string;

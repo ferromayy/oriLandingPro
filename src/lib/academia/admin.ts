@@ -7,6 +7,8 @@ function toPayload(data: AcademiaEventFormData): AcademiaEventInsert {
     image_url: data.image_url.trim(),
     title: data.title.trim(),
     subtitle: data.subtitle.trim(),
+    duration: data.duration.trim(),
+    description: data.description.trim(),
     is_active: data.is_active,
     sort_order: data.sort_order,
   };
@@ -23,7 +25,7 @@ export async function getAllAcademiaEventsAdmin(): Promise<AcademiaEvent[]> {
   if (error) {
     if (/academia_events/i.test(error.message)) {
       throw new Error(
-        `${error.message} — Ejecutá supabase/migrations/028_academia_events.sql en Supabase.`,
+        `${error.message} — Ejecutá en Supabase las migraciones de academia, incluida 030_academia_events_details.sql.`,
       );
     }
     throw new Error(error.message);
@@ -59,7 +61,7 @@ export async function createAcademiaEventAdmin(
   if (error) {
     if (/academia_events/i.test(error.message)) {
       throw new Error(
-        `${error.message} — Ejecutá supabase/migrations/028_academia_events.sql en Supabase.`,
+        `${error.message} — Ejecutá en Supabase las migraciones de academia, incluida 030_academia_events_details.sql.`,
       );
     }
     throw new Error(error.message);

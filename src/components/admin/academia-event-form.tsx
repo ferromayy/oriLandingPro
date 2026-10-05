@@ -11,6 +11,8 @@ import {
 } from "@/components/admin/form-notifications";
 import { saveAcademiaEventAction } from "@/lib/academia/actions";
 import {
+  ACADEMIA_DESCRIPTION_MAX,
+  ACADEMIA_DURATION_MAX,
   ACADEMIA_TEXT_MAX,
   type AcademiaEventFormData,
 } from "@/lib/academia/types";
@@ -25,6 +27,8 @@ const emptyForm: AcademiaEventFormData = {
   image_url: "",
   title: "",
   subtitle: "",
+  duration: "",
+  description: "",
   is_active: true,
   sort_order: 0,
 };
@@ -205,7 +209,7 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-zinc-700">
-              Texto 1
+              Título
             </label>
             <input
               type="text"
@@ -215,7 +219,7 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
               className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
                 fieldHasError(issues, "title") ? inputErrorClass : "border-zinc-300"
               }`}
-              placeholder="Ej. Taller de filtrados"
+              placeholder="Ej. Taller un buen café para tu casa"
             />
             <p className="mt-1 text-xs text-zinc-500">
               {form.title.length}/{ACADEMIA_TEXT_MAX} caracteres
@@ -224,7 +228,7 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-zinc-700">
-              Texto 2
+              Edición y lugar
             </label>
             <input
               type="text"
@@ -236,10 +240,52 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
                   ? inputErrorClass
                   : "border-zinc-300"
               }`}
-              placeholder="Ej. Sábado 12 — Córdoba"
+              placeholder="Ej. 1.ª edición — Baltus Cafetería (Nueva Córdoba)"
             />
             <p className="mt-1 text-xs text-zinc-500">
-              {form.subtitle.length}/{ACADEMIA_TEXT_MAX} caracteres
+              {form.subtitle.length}/{ACADEMIA_TEXT_MAX} caracteres. Si todavía no hay fecha, podés dejar «Próximamente».
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700">
+              Duración
+            </label>
+            <input
+              type="text"
+              maxLength={ACADEMIA_DURATION_MAX}
+              value={form.duration}
+              onChange={(e) => updateField("duration", e.target.value)}
+              className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
+                fieldHasError(issues, "duration")
+                  ? inputErrorClass
+                  : "border-zinc-300"
+              }`}
+              placeholder="Ej. 3 horas"
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              {form.duration.length}/{ACADEMIA_DURATION_MAX} caracteres. Si lo dejás vacío, no se muestra en la card.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700">
+              Descripción
+            </label>
+            <textarea
+              maxLength={ACADEMIA_DESCRIPTION_MAX}
+              rows={6}
+              value={form.description}
+              onChange={(e) => updateField("description", e.target.value)}
+              className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
+                fieldHasError(issues, "description")
+                  ? inputErrorClass
+                  : "border-zinc-300"
+              }`}
+              placeholder={"Un encuentro para aprender a leer el café antes de prepararlo.\n\nVamos a conocer qué hay detrás de cada grano."}
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              {form.description.length}/{ACADEMIA_DESCRIPTION_MAX} caracteres. Un renglón por idea. Si lo dejás vacío, no se muestra en la card.
             </p>
           </div>
 

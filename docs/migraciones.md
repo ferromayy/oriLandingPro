@@ -34,7 +34,8 @@ Ejecutar en **Supabase → SQL Editor** del proyecto correspondiente (local o pr
 | 026 | `026_education_note_section.sql` | Columna `section` en notas (`blog` \| `prepara_en_casa`) |
 | 027 | `027_education_note_content_blocks.sql` | Columna `content_blocks` (párrafos JSON con texto + imágenes) |
 | 028 | `028_academia_events.sql` | Tabla `academia_events` (imagen + 2 textos para Academia) |
-| 029 | `029_academia_events_text_max_60.sql` | Límite de Texto 1 / Texto 2 de Academia: **60** caracteres |
+| 029 | `029_academia_events_text_max_60.sql` | Límite de título y edición/lugar de Academia: **60** caracteres |
+| 030 | `030_academia_events_details.sql` | Columnas `duration` (máx. 40) y `description` (máx. 500) en `academia_events` |
 
 ## Producción (Vercel)
 
@@ -173,11 +174,19 @@ supabase/migrations/028_academia_events.sql
 
 Crea `academia_events` (imagen + título + subtítulo) e incluye `notify pgrst, 'reload schema'`.
 
-Para subir el límite de Texto 1 / Texto 2 a **60** caracteres:
+Para subir el límite de título y edición/lugar a **60** caracteres:
 
 ```
 supabase/migrations/029_academia_events_text_max_60.sql
 ```
+
+Para poder guardar duración y descripción desde el admin:
+
+```
+supabase/migrations/030_academia_events_details.sql
+```
+
+Sin **030**, guardar un evento falla porque esas columnas no existen. La página pública sigue mostrando duración y descripción de café en casa y filtrados desde la card.
 
 ### Schema cache
 

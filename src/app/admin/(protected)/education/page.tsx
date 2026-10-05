@@ -157,7 +157,9 @@ export default async function AdminEducationPage() {
             <p>{eventsError}</p>
             <p className="mt-2 text-xs">
               Ejecutá{" "}
-              <code className="rounded bg-white/70 px-1">028_academia_events.sql</code>{" "}
+              <code className="rounded bg-white/70 px-1">
+                030_academia_events_details.sql
+              </code>{" "}
               en Supabase.
             </p>
           </div>
@@ -168,8 +170,9 @@ export default async function AdminEducationPage() {
             <thead className="border-b border-zinc-200 bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
               <tr>
                 <th className="px-4 py-3">Imagen</th>
-                <th className="px-4 py-3">Texto 1</th>
-                <th className="px-4 py-3">Texto 2</th>
+                <th className="px-4 py-3">Título</th>
+                <th className="px-4 py-3">Edición</th>
+                <th className="px-4 py-3">Duración</th>
                 <th className="px-4 py-3">Posición</th>
                 <th className="px-4 py-3">Estado</th>
                 <th className="px-4 py-3 text-right">Acciones</th>
@@ -191,6 +194,9 @@ export default async function AdminEducationPage() {
                   </td>
                   <td className="px-4 py-3 font-medium text-zinc-900">{event.title}</td>
                   <td className="px-4 py-3 text-zinc-600">{event.subtitle}</td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {event.duration?.trim() || "—"}
+                  </td>
                   <td className="px-4 py-3 text-zinc-600">{event.sort_order}</td>
                   <td className="px-4 py-3">
                     {event.is_active ? (
@@ -221,7 +227,7 @@ export default async function AdminEducationPage() {
               ))}
               {events.length === 0 && !eventsError && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
                     No hay eventos todavía. Creá el primero.
                   </td>
                 </tr>
