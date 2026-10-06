@@ -318,7 +318,7 @@ export function AcademiaEventCard({ event: source }: Props) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.18em] text-gray-500 underline underline-offset-4 transition-colors hover:text-gray-800"
         >
-          Más info
+          Más info y reservas
           <span aria-hidden className="no-underline">
             →
           </span>

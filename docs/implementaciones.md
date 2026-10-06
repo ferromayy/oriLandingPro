@@ -26,7 +26,7 @@ Siempre:
 1. **Imagen**
 2. **Título** (máx. 60)
 3. **Ubicación** — hoy todas dicen `Córdoba capital`
-4. **Más info** — abre WhatsApp
+4. **Más info y reservas** — abre WhatsApp
 
 Puede no estar:
 
