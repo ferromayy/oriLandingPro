@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site/site-header";
 import { CartDrawer } from "@/components/site/cart-drawer";
 import { SiteFooter } from "@/components/site/site-footer";
 import { WhatsAppFab } from "@/components/site/whatsapp-fab";
+import { MetaPixel } from "@/components/site/meta-pixel";
 
 export default function SiteLayout({
   children,
@@ -12,6 +13,7 @@ export default function SiteLayout({
 }) {
   return (
     <CartProvider>
+      <MetaPixel />
       <PromoBar />
       <SiteHeader />
       <div className="flex flex-1 flex-col pt-28">{children}</div>
