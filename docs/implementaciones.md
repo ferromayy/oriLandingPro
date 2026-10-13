@@ -250,6 +250,27 @@ Si en Supabase falta la columna `order_code`, `createCustomerOrder` intenta un i
 
 ---
 
+## Píxel de Meta
+
+Mide visitas del sitio público. No se carga en `/admin` ni en el login.
+
+| Dato | Valor |
+|------|--------|
+| Conjunto de datos | `pixel ori` |
+| ID | `4471903319724482` |
+| Cuenta | Ori tostadores de café |
+| Dominio | `https://www.oricafe.com.ar` |
+| Evento base | `PageView` (visita a la página) |
+
+- El snippet va en el HTML inicial del layout público (`src/app/(site)/layout.tsx`), con el texto en `src/components/site/meta-pixel-snippet.ts`. Meta lee esa primera respuesta; si el código solo se inyecta después de hidratar React, el verificador no lo ve.
+- Las navegaciones internas (sin recargar) disparan otro `PageView` desde `src/components/site/meta-pixel.tsx`.
+- El admin no tiene píxel.
+- No hay eventos de carrito ni de compra. El checkout sigue siendo WhatsApp.
+
+Para comprobarlo: Administrador de eventos → conjunto `pixel ori` → **Probar eventos** → canal **Sitio web** → URL `https://www.oricafe.com.ar`. Tiene que aparecer `PageView` con estado Procesado. En **Resumen**, el gráfico usa el rango de fechas de arriba a la derecha; si no incluye el día de la visita, queda en cero. **Sitios web** se completa solo cuando llega un evento desde ese dominio.
+
+---
+
 ## Deploy y entorno
 
 ### Variables relevantes (`.env.local` / Vercel)
@@ -311,6 +332,7 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 | Cafés — validación oculta | `src/lib/coffees/schema.ts`, `hidden-coffee-validation.test.ts` |
 | Uploads admin | `src/lib/uploads/upload-client.ts`, `compress-client.ts`, `prepare-image.ts`, `src/app/api/admin/upload/route.ts` |
 | Features / flags | `src/lib/site/features.ts` |
+| Píxel de Meta | `src/components/site/meta-pixel-snippet.ts`, `meta-pixel.tsx`, `src/app/(site)/layout.tsx` |
 | Config Next.js | `next.config.ts` |
 | Migraciones | `supabase/migrations/` (ver [migraciones.md](./migraciones.md)) |
 
@@ -331,4 +353,4 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 
 ---
 
-*Última actualización: agosto 2026 — Educación (hub Blog / Prepará en casa, párrafos `content_blocks`, uploads por API + compresión), migraciones 026–027 obligatorias para sección y párrafos.*
+*Última actualización: octubre 2026 — píxel de Meta (`4471903319724482`) solo en el sitio público.*
