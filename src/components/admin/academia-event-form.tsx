@@ -14,6 +14,10 @@ import {
   ACADEMIA_DESCRIPTION_MAX,
   ACADEMIA_DURATION_MAX,
   ACADEMIA_TEXT_MAX,
+  composeAcademiaSubtitle,
+  composeAcademiaTitle,
+  splitAcademiaSubtitle,
+  splitAcademiaTitle,
   type AcademiaEventFormData,
 } from "@/lib/academia/types";
 import {
@@ -42,9 +46,16 @@ type Props = {
 export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [form, setForm] = useState<AcademiaEventFormData>(() =>
-    initialData ? { ...emptyForm, ...initialData } : emptyForm,
-  );
+  const seeded = initialData ? { ...emptyForm, ...initialData } : emptyForm;
+  const seededTitle = splitAcademiaTitle(seeded.title);
+  const seededSubtitle = splitAcademiaSubtitle(seeded.subtitle);
+  const [form, setForm] = useState<AcademiaEventFormData>({
+    ...seeded,
+    title: seededTitle.title,
+  });
+  const [when, setWhen] = useState(seededSubtitle.when);
+  const [place, setPlace] = useState(seededSubtitle.place);
+  const [educators, setEducators] = useState(seededTitle.educators);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [issues, setIssues] = useState<FormValidationIssue[]>([]);
@@ -95,7 +106,12 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
     event.preventDefault();
     clearIssues();
 
-    const validation = validateAcademiaEventForm(form);
+    const payload: AcademiaEventFormData = {
+      ...form,
+      title: composeAcademiaTitle(form.title, educators),
+      subtitle: composeAcademiaSubtitle(when, place),
+    };
+    const validation = validateAcademiaEventForm(payload);
     if (!validation.success) {
       setIssues(validation.issues);
       setShowToast(true);
@@ -104,7 +120,11 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
 
     setLoading(true);
     try {
-      const result = await saveAcademiaEventAction(mode, eventId, validation.data);
+      const result = await saveAcademiaEventAction(mode, eventId, {
+        ...validation.data,
+        title: payload.title,
+        subtitle: payload.subtitle,
+      });
       if (!result.ok) {
         setIssues(
           (result.issues ?? [{ field: "form", message: result.message }]).map(
@@ -209,7 +229,7 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-zinc-700">
-              Título
+              Título del curso o taller
             </label>
             <input
               type="text"
@@ -222,7 +242,26 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
               placeholder="Ej. Taller un buen café para tu casa"
             />
             <p className="mt-1 text-xs text-zinc-500">
-              {form.title.length}/{ACADEMIA_TEXT_MAX} caracteres
+              {composeAcademiaTitle(form.title, educators).length}/{ACADEMIA_TEXT_MAX} caracteres, contando quién lo da.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700">
+              Fecha o estado
+            </label>
+            <input
+              type="text"
+              value={when}
+              onChange={(e) => {
+                clearIssues();
+                setWhen(e.target.value);
+              }}
+              className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+              placeholder="Ej. 10/10/26 o Próximamente"
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              Si es una fecha, usá el formato 10/10/26. Si todavía no hay fecha, escribí Próximamente.
             </p>
           </div>
 
@@ -232,9 +271,11 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
             </label>
             <input
               type="text"
-              maxLength={ACADEMIA_TEXT_MAX}
-              value={form.subtitle}
-              onChange={(e) => updateField("subtitle", e.target.value)}
+              value={place}
+              onChange={(e) => {
+                clearIssues();
+                setPlace(e.target.value);
+              }}
               className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
                 fieldHasError(issues, "subtitle")
                   ? inputErrorClass
@@ -243,7 +284,30 @@ export function AcademiaEventForm({ mode, eventId, initialData }: Props) {
               placeholder="Ej. 1.ª edición — Baltus Cafetería (Nueva Córdoba)"
             />
             <p className="mt-1 text-xs text-zinc-500">
-              {form.subtitle.length}/{ACADEMIA_TEXT_MAX} caracteres. Si todavía no hay fecha, podés dejar «Próximamente».
+              Fecha + este texto juntos no pueden pasar de {ACADEMIA_TEXT_MAX} caracteres
+              ({composeAcademiaSubtitle(when, place).length}/{ACADEMIA_TEXT_MAX}).
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700">
+              Quién lo da
+            </label>
+            <textarea
+              rows={3}
+              value={educators}
+              onChange={(e) => {
+                clearIssues();
+                setEducators(e.target.value);
+              }}
+              className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
+                fieldHasError(issues, "title") ? inputErrorClass : "border-zinc-300"
+              }`}
+              placeholder={"Un nombre por línea\nEj. Fernanda Romay"}
+            />
+            <p className="mt-1 text-xs text-zinc-500">
+              En la card aparece como «Por». Título + nombres no pueden pasar de {ACADEMIA_TEXT_MAX} caracteres
+              ({composeAcademiaTitle(form.title, educators).length}/{ACADEMIA_TEXT_MAX}).
             </p>
           </div>
 
