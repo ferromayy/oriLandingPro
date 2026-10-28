@@ -6,6 +6,7 @@ import {
   MIN_COFFEE_IMAGES,
 } from "@/types/database";
 import type { CoffeeFormData } from "@/lib/coffees/types";
+import { COFFEE_PROCESS_OPTIONS } from "@/lib/coffees/process";
 
 const imageSchema = z.object({
   url: z.string().min(1),
@@ -39,7 +40,10 @@ export const coffeeFormSchema = z
     extended_content_catch_text: z.string().optional().default(""),
     origin: z.string().optional().default(""),
     varietal: z.string().optional().default(""),
-    beneficio: z.string().optional().default(""),
+    beneficio: z
+      .union([z.literal(""), z.enum(COFFEE_PROCESS_OPTIONS)])
+      .optional()
+      .default(""),
     altitude: z.string().optional().default(""),
     producer: z.string().optional().default(""),
     images: z
@@ -179,6 +183,9 @@ const FIELD_SECTION: Record<string, FormSection> = {
   long_description: "general",
   extended_content_url: "general",
   extended_content_catch_text: "general",
+  origin: "general",
+  varietal: "general",
+  beneficio: "general",
   sort_order: "general",
   images: "images",
   variants: "variants",

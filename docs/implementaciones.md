@@ -149,7 +149,8 @@ Al abrir/editar una nota vieja, el sistema arma párrafos desde el contenido ant
 
 ### Ficha técnica y notas de cata
 
-- Campos en admin: origen, varietal, beneficio, altitud, **productor** (opcional, migración `023_coffee_producer.sql`), notas de cata.
+- Campos en admin: origen, varietal, **proceso** (columna `beneficio`; selector con Lavado, Honey / Semi-lavado, Natural, Natural anaeróbico), altitud, **productor** (opcional, migración `023_coffee_producer.sql`), notas de cata. Valores viejos se unifican en la migración **`031`**. Honey y semi-lavado son el mismo proceso y se muestran juntos.
+- Los filtros de `/cafe` (`CoffeeCatalogBrowser`) son **origen** y **proceso**. El inicio lista todos los cafés, sin filtro. Origen toma el país como el texto antes de la primera coma o ` - ` (`Colombia, Rio blanco - Tolima` → Colombia). El desplegable se arma solo con países y procesos que hay publicados; si un café deja de usar un país, esa opción desaparece. Sin origen o proceso se ven en **Todos**.
 - En el **detalle público** se muestran en la **columna derecha** (panel de compra), debajo del nombre/codename y **antes** de molienda y carrito (`ProductTechAndTasting` en `src/components/site/product-tech-tasting.tsx`).
 - Solo se renderizan los campos con texto; productor vacío no se muestra.
 - La descripción corta y el bloque “Seguí leyendo” siguen en la sección inferior (`ProductDetailContent`).
@@ -327,6 +328,7 @@ Si en `npm run dev` aparecen **404 en todas las rutas** o errores de módulos (`
 | Educación — imágenes admin | `src/components/admin/education-primary-image-editor.tsx` |
 | Educación — media pública | `src/components/site/education-note-media.tsx`, `education-note-body.tsx` |
 | QR educación | `src/components/admin/education-note-qr.tsx`, `src/lib/site/public-url.ts` |
+| Cafés — catálogo | `src/components/site/coffee-catalog.tsx`, `coffee-catalog-browser.tsx`, `coffee-catalog-filter.tsx` |
 | Cafés — detalle público | `src/components/site/product-tech-tasting.tsx`, `extended-content-catch.tsx`, `product-purchase-panel.tsx` |
 | Cafés — admin | `src/lib/coffees/`, `src/components/admin/coffee-form.tsx` |
 | Cafés — validación oculta | `src/lib/coffees/schema.ts`, `hidden-coffee-validation.test.ts` |

@@ -4,6 +4,7 @@ import { prepareImageUpload } from "@/lib/uploads/prepare-image";
 import { COFFEE_RELATIONS_SELECT } from "@/lib/coffees/select";
 import type { CoffeeFormData, Coffee } from "@/lib/coffees/types";
 import { slugify } from "@/lib/coffees/types";
+import { normalizeCoffeeProcess } from "@/lib/coffees/process";
 import type { CoffeeInsert, CoffeeUpdate } from "@/types/database";
 
 function toCoffeePayload(data: CoffeeFormData): CoffeeInsert {
@@ -22,7 +23,7 @@ function toCoffeePayload(data: CoffeeFormData): CoffeeInsert {
         : "",
     origin: data.origin.trim(),
     varietal: data.varietal.trim(),
-    beneficio: data.beneficio.trim(),
+    beneficio: normalizeCoffeeProcess(data.beneficio),
     altitude: data.altitude.trim(),
     producer: data.producer.trim(),
     is_active: data.is_active,

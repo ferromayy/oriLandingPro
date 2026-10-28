@@ -51,4 +51,15 @@ describe("validación de café oculto en landing", () => {
     expect(issues.some((issue) => issue.field === "tasting_notes")).toBe(true);
     expect(issues.some((issue) => issue.field === "short_description")).toBe(true);
   });
+
+  it("solo acepta los procesos de la lista", () => {
+    expect(
+      validateCoffeeForm(baseForm({ beneficio: "Honey / Semi-lavado" })),
+    ).toEqual([]);
+    expect(
+      validateCoffeeForm(baseForm({ beneficio: "lavado" })).some(
+        (issue) => issue.field === "beneficio",
+      ),
+    ).toBe(true);
+  });
 });

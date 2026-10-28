@@ -35,6 +35,10 @@ import {
 import { getEducationNotePublicPath } from "@/lib/site/public-url";
 import { uploadAdminImageClient } from "@/lib/uploads/upload-client";
 import { IMAGE_UPLOAD_ACCEPT } from "@/lib/uploads/image-types";
+import {
+  COFFEE_PROCESS_OPTIONS,
+  isCoffeeProcess,
+} from "@/lib/coffees/process";
 
 export type EducationNoteOption = {
   id: string;
@@ -562,8 +566,8 @@ export function CoffeeForm({
               Ficha técnica y notas de cata
             </h2>
             <p className="mt-1 text-xs text-zinc-500">
-              Origen, varietal y notas de cata se muestran en la ficha pública del
-              producto.
+              Origen, varietal, proceso y notas de cata se muestran en la ficha
+              pública del producto.
             </p>
           </div>
 
@@ -592,6 +596,10 @@ export function CoffeeForm({
                 className={inputClass(false)}
                 placeholder="Colombia, Rio blanco - Tolima"
               />
+              <p className="mt-1 text-xs text-zinc-500">
+                El país va primero. El filtro de Café usa esa parte (Colombia,
+                Costa Rica, etc.).
+              </p>
             </Field>
             <Field label="Varietal">
               <input
@@ -601,13 +609,27 @@ export function CoffeeForm({
                 placeholder="Gesha"
               />
             </Field>
-            <Field label="Beneficio">
-              <input
+            <Field
+              label="Proceso"
+              error={fieldHasError(issues, "beneficio")}
+            >
+              <select
                 value={form.beneficio}
                 onChange={(e) => updateField("beneficio", e.target.value)}
-                className={inputClass(false)}
-                placeholder="Honey"
-              />
+                className={inputClass(fieldHasError(issues, "beneficio"))}
+              >
+                <option value="">Sin proceso</option>
+                {COFFEE_PROCESS_OPTIONS.map((process) => (
+                  <option key={process} value={process}>
+                    {process}
+                  </option>
+                ))}
+                {form.beneficio && !isCoffeeProcess(form.beneficio) && (
+                  <option value={form.beneficio}>
+                    {form.beneficio} (revisar)
+                  </option>
+                )}
+              </select>
             </Field>
             <Field label="Altitud">
               <input

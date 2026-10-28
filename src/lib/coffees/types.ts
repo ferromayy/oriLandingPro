@@ -1,4 +1,5 @@
 import { normalizeExtendedContentUrl } from "@/lib/coffees/extended-content";
+import { normalizeCoffeeProcess } from "@/lib/coffees/process";
 import type {
   CoffeeImageRow,
   CoffeeRow,
@@ -83,7 +84,7 @@ export function coffeeToFormData(coffee: Coffee): CoffeeFormData {
     extended_content_catch_text: coffee.extended_content_catch_text?.trim() ?? "",
     origin: coffee.origin,
     varietal: coffee.varietal,
-    beneficio: coffee.beneficio,
+    beneficio: normalizeCoffeeProcess(coffee.beneficio),
     altitude: coffee.altitude,
     producer: coffee.producer ?? "",
     images: images.map((img) => ({

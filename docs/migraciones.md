@@ -36,6 +36,7 @@ Ejecutar en **Supabase → SQL Editor** del proyecto correspondiente (local o pr
 | 028 | `028_academia_events.sql` | Tabla `academia_events` (imagen + 2 textos para Academia) |
 | 029 | `029_academia_events_text_max_60.sql` | Límite de título y edición/lugar de Academia: **60** caracteres |
 | 030 | `030_academia_events_details.sql` | Columnas `duration` (máx. 40) y `description` (máx. 500) en `academia_events` |
+| 031 | `031_coffee_process_values.sql` | Unifica `beneficio` a Lavado, Honey / Semi-lavado, Natural, Natural anaeróbico |
 
 ## Producción (Vercel)
 
@@ -103,6 +104,12 @@ Para el campo **productor** en la ficha técnica:
 
 ```
 supabase/migrations/023_coffee_producer.sql
+```
+
+Para unificar **proceso** (`beneficio`) a Lavado, Honey / Semi-lavado, Natural o Natural anaeróbico:
+
+```
+supabase/migrations/031_coffee_process_values.sql
 ```
 
 Después de la 022, configurá precio y stock de 200g en cada café desde `/admin/coffees`. Si el sitio en producción sigue mostrando sold out con stock solo en 200g, ejecutá la migración **y** hacé redeploy en Vercel.

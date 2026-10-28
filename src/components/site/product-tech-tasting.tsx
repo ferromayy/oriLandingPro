@@ -29,7 +29,7 @@ export function ProductTechAndTasting({ coffee }: { coffee: Coffee }) {
             )}
             {coffee.beneficio && (
               <>
-                Beneficio: {coffee.beneficio}
+                Proceso: {coffee.beneficio}
                 <br />
               </>
             )}
